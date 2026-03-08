@@ -1,7 +1,7 @@
 import { Suspense, lazy } from 'react';
 
 // --- 1. THE NUKE SNIPPET (Cache Busting) ---
-const APP_VERSION = '2026.03.08.07'; // Force update version
+const APP_VERSION = '2026.03.08.08'; // Force update version
 
 if (localStorage.getItem('v_cache') !== APP_VERSION) {
   // Clear Service Workers

@@ -381,7 +381,7 @@ color:"#ffffff",position:"relative",overflowX:"hidden" }}>
             <div style={{ fontSize:15,color:diff.color,letterSpacing:3,textTransform:"uppercase",marginBottom:6 }}>Protokol Selesai</div>
             <div style={{ fontSize:19,color:"#ffffff",fontFamily:"Georgia,serif",marginBottom:10 }}>Misi Fokus Berhasil</div>
             <div style={{ fontSize:15,color:"#ffffff",lineHeight:1.7,marginBottom:18 }}>
-              Sistem telah ter-install di bawah sadar.<br/>
+              Sistem tetap bekerja otomatis di bawah sadar meski semua Bump telah dilupakan.<br/>
               Pertahankan kejernihan ini sepanjang hari.
             </div>
             <button onClick={() => { setComplete(false); resetSession(); setScreen("select"); }} style={{ padding:"11px 24px",borderRadius:10,background:diff.color,border:"none",color:"#000",fontWeight:"bold",fontSize:15,cursor:"pointer" }}>Selesai</button>
@@ -533,8 +533,8 @@ color:"#ffffff",position:"relative",overflowX:"hidden" }}>
                   }}>
                     {done&&<div style={{ position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",background:"#0f172acc",fontSize:20,color:"#4ade80" }}>✓</div>}
                     <div style={{ fontSize: isDesktop ? 22 : 15,marginBottom:2,color:done?"#334155":b.color }}>{b.emoji}</div>
-                    <div style={{ fontSize: isDesktop ? 15 : 15,color:done?"#334155":b.color,fontWeight:"bold",lineHeight:1.3 }}>{b.label}</div>
-                    <div style={{ fontSize: isDesktop ? 15 : 15,color:done?"#1e293b":"#64748b",marginTop:1 }}>{b.sub}</div>
+                    <div style={{ fontSize: 15,color:done?"#ffffff":b.color,fontWeight:"bold",lineHeight:1.3 }}>{b.label}</div>
+                    <div style={{ fontSize: 17,color:"#ffffff",marginTop:1 }}>{b.sub}</div>
                     
                     {canClick && (
                       <div style={{ marginTop: 8, fontSize: 15, color: b.color, fontWeight: "bold", textTransform: "uppercase", letterSpacing: 0.5, animation: "flash 1s infinite" }}>
