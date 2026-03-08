@@ -29,22 +29,22 @@ const FOCUS_BUBBLES = [
 
 const BUMP_BUBBLES: Record<number, { atPct: number; text: (desire?: string) => string }[]> = {
   0: [
-    { atPct: 5,  text: () => "Sekarang niatkan yang kamu lihat ini... Jelas begitu dalam" },
+    { atPct: 0,  text: () => "Niatkan apa yang anda lihat sekarang jelas begitu dalam" },
     { atPct: 40, text: () => "Niatkan saja jelas begitu dalam, tidak ada keharusan terjadi" },
     { atPct: 75, text: () => "Pertahankan niat yang dalam and santai ini..." },
   ],
   1: [
-    { atPct: 5,  text: () => "Sekarang niatkan yang kamu lihat ini... Pasrah begitu dalam" },
+    { atPct: 0,  text: () => "Niatkan apa yang anda lihat sekarang pasrah begitu dalam" },
     { atPct: 40, text: () => "Niatkan saja pasrah begitu dalam, tidak ada keharusan terjadi" },
     { atPct: 75, text: () => "Pertahankan kepasrahan yang dalam and santai ini..." },
   ],
   2: [
-    { atPct: 5,  text: (d) => `Sekarang niatkan "${d}" itu terasa begitu jelas yang dalam` },
+    { atPct: 0,  text: (d) => `Niatkan ${d} anda terasa jelas begitu dalam` },
     { atPct: 40, text: (d) => `Niatkan saja "${d}" itu jelas begitu dalam, tidak ada keharusan terjadi` },
     { atPct: 75, text: () => "Pertahankan niat kejelasan yang dalam and santai ini..." },
   ],
   3: [
-    { atPct: 5,  text: (d) => `Sekarang niatkan "${d}" itu pasrah begitu dalam` },
+    { atPct: 0,  text: (d) => `Niatkan ${d} anda terasa relax begitu dalam` },
     { atPct: 40, text: (d) => `Niatkan saja "${d}" itu pasrah begitu dalam, tidak ada keharusan terjadi` },
     { atPct: 75, text: () => "Pertahankan kepasrahan yang dalam and santai ini..." },
   ],
@@ -117,7 +117,7 @@ export default function TheBump({ session }: { session: any }) {
   const [bumpDone, setBumpDone] = useState([false,false,false,false]);
   const [rings, setRings] = useState<any[]>([]);
   const [showTutorial, setShowTutorial] = useState(false);
-  const [desire, setDesire] = useState("Contoh: Bisnis tembus 100 juta");
+  const [desire, setDesire] = useState("100 Juta Tercapai");
   const [editingDesire, setEditingDesire] = useState(false);
   const [complete, setComplete] = useState(false);
   const [pulseT, setPulseT] = useState(0);
@@ -131,12 +131,51 @@ export default function TheBump({ session }: { session: any }) {
   const [isDesktop, setIsDesktop] = useState(window.innerWidth > 1024);
   const ringId = useRef(0);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Background Audio Management
+  useEffect(() => {
+    // Initialize audio object
+    if (!audioRef.current) {
+      audioRef.current = new Audio("/focusloop.MP3");
+      audioRef.current.loop = true;
+      audioRef.current.volume = 0.4; // Set a moderate volume
+    }
+
+    const playAudio = async () => {
+      try {
+        if ((running || isBumping) && !complete && screen === "session") {
+          if (audioRef.current && audioRef.current.paused) {
+            console.log("[AUDIO] Starting focus background loop");
+            await audioRef.current.play();
+          }
+        } else {
+          if (audioRef.current && !audioRef.current.paused) {
+            console.log("[AUDIO] Pausing focus background loop");
+            audioRef.current.pause();
+          }
+        }
+      } catch (err) {
+        console.warn("[AUDIO] Playback failed (browser restriction?):", err);
+      }
+    };
+
+    playAudio();
+
+    // Cleanup on unmount
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, [running, isBumping, complete, screen]);
 
   useEffect(() => {
     const syncUser = async () => {
       if (session?.user) {
         setUserMetadata(session.user.user_metadata);
-        
+        console.log("[SYNC] Attempting to sync user to focus_clients...");
         const { error } = await supabase.from('focus_clients').upsert({
           user_id: session.user.id,
           user_email: session.user.email,
@@ -144,9 +183,9 @@ export default function TheBump({ session }: { session: any }) {
         }, { onConflict: 'user_id' });
 
         if (error) {
-          console.error("Supabase Sync Error:", error.message, error.details, error.hint);
+          console.error("[SYNC] Supabase Sync Error:", error.message, error.details, error.hint);
         } else {
-          console.log("User successfully synced to focus_clients");
+          console.log("[SYNC] User successfully synced to focus_clients");
         }
       }
     };
@@ -161,15 +200,20 @@ export default function TheBump({ session }: { session: any }) {
 
   useEffect(() => {
     window.scrollTo(0, 0);
+    console.log("[STEP] UI Screen/Step changed:", { screen, protocolStep });
+    if (screen === "session" && protocolStep === 1 && !running) {
+      setShowFingerHint(true);
+    }
   }, [screen, protocolStep]);
 
   const diff = DIFFICULTIES.find(d => d.id === diffId) || DIFFICULTIES[0];
   const bumpDurationSec = diff.focusSec * 0.25;
-  const isVolumeFull = volume >= 100;
+  const isVolumeFull = Math.floor(volume) >= 100;
 
   const fetchHistory = async () => {
     if (!session?.user) return;
     setLoadingHistory(true);
+    console.log("[HISTORY] Fetching history...");
     try {
       const { data, error } = await supabase
         .from('focus_history')
@@ -178,14 +222,16 @@ export default function TheBump({ session }: { session: any }) {
         .limit(20);
       if (error) throw error;
       setHistoryData(data || []);
+      console.log("[HISTORY] Data fetched:", data?.length, "records");
     } catch (err) {
-      console.error("Error fetching history:", err);
+      console.error("[HISTORY] Error fetching history:", err);
     } finally {
       setLoadingHistory(false);
     }
   };
 
   const handleLogout = async () => {
+    console.log("[AUTH] Logging out...");
     await supabase.auth.signOut();
     window.location.href = "/auth";
   };
@@ -193,58 +239,105 @@ export default function TheBump({ session }: { session: any }) {
   const startTracking = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const { data, error } = await supabase.from('focus_history').insert({ user_id: user.id, user_email: user.email, difficulty: diff.label, desire_text: desire, status: 'started' }).select().single();
-      if (error) throw error;
-      setSessionId(data.id);
-    } catch (err) {
-      console.error('Failed to start tracking:', err);
+      if (!user) {
+        console.warn("[TRACKING] Aborted: No user session.");
+        return;
+      }
+
+      console.log("[TRACKING] Starting session for:", user.email);
+      const { data, error } = await supabase
+        .from('focus_history')
+        .insert({ 
+          user_id: user.id, 
+          user_email: user.email, 
+          difficulty: diff.label, 
+          desire_text: desire, 
+          status: 'started' 
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error("[TRACKING] Supabase Insert Error:", error.message);
+        return;
+      }
+
+      if (data) {
+        console.log("[TRACKING] Session record created:", data.id);
+        setSessionId(data.id);
+      }
+    } catch (err: any) {
+      console.error('[TRACKING] Critical Error:', err);
     }
   };
 
   const finishTracking = async () => {
-    if (!sessionId) return;
+    if (!sessionId) {
+      console.warn("[TRACKING] Cannot finish: No sessionId found.");
+      return;
+    }
     try {
       const totalFocusTime = (protocolStep === 6 ? diff.focusSec : 0) + (bumpDone.filter(Boolean).length * bumpDurationSec);
+      console.log("[TRACKING] Finalizing session:", sessionId, "Total focus time:", totalFocusTime);
       await supabase.from('focus_history').update({ status: 'completed', finished_at: new Date().toISOString(), focus_time: Math.floor(totalFocusTime), bump_count: bumpDone.filter(Boolean).length }).eq('id', sessionId);
     } catch (err) {
-      console.error('Failed to finish tracking:', err);
+      console.error('[TRACKING] Error finalizing session:', err);
     }
   };
 
   const updateBumpTracking = async (count: number) => {
     if (!sessionId) return;
+    console.log("[TRACKING] Updating bump count to:", count);
     try {
       await supabase.from('focus_history').update({ bump_count: count }).eq('id', sessionId);
     } catch (err) {
-      console.error('Failed to update bump tracking:', err);
+      console.error('[TRACKING] Error updating bump count:', err);
     }
   };
 
+  // Timer for Step 1 and Step 6 (Focus Fill)
   useEffect(() => {
     if (!running || isBumping || complete) return;
-    if (protocolStep !== 1 && protocolStep !== 6) return;
+    if (protocolStep !== 1 && protocolStep !== 6) {
+      console.log("[LOG] Focus timer skipped because step is not 1 or 6. Current step:", protocolStep);
+      return;
+    }
+
+    console.log("[TIMER] Starting Focus Fill timer for Step:", protocolStep);
     const id = setInterval(() => {
       setElapsed(e => {
         const next = e + 1;
         const pct = Math.min(100, (next / diff.focusSec) * 100);
         setVolume(pct);
+
         const floorPct = Math.floor(pct);
         const stepKey = protocolStep * 1000 + floorPct;
+        
         if (!shownFocus.has(stepKey)) {
           const match = FOCUS_BUBBLES.find(b => b.atPct === floorPct);
           if (match) {
+            console.log("[BUBBLE] Triggering focus bubble at", floorPct, "%");
             setActiveBubble(match.text);
             if (bubbleTimerRef.current) clearTimeout(bubbleTimerRef.current);
             bubbleTimerRef.current = setTimeout(() => setActiveBubble(null), 4000);
             setShownFocus(prev => { const next2 = new Set(prev); next2.add(stepKey); return next2; });
           }
         }
+
         if (pct >= 100) {
+          console.log("[TIMER] Focus Fill 100% complete for step", protocolStep);
           setRunning(false);
-          setShowFingerHint(true);
-          if (protocolStep === 1) { setProtocolStep(2); showToast("Volume Penuh. Siap untuk Bump 1."); }
-          else if (protocolStep === 6) { finishTracking(); setTimeout(() => setComplete(true), 700); }
+          setShowFingerHint(true); 
+          if (protocolStep === 1) { 
+            console.log("[LOG] Transitioning to Step 2 (Bump Phase)");
+            setProtocolStep(2); 
+            showToast("Volume Penuh. Siap untuk Bump 1."); 
+          }
+          else if (protocolStep === 6) { 
+            console.log("[LOG] Protocol Step 6 Finished.");
+            finishTracking(); 
+            setTimeout(() => setComplete(true), 700); 
+          }
         }
         return next;
       });
@@ -255,38 +348,56 @@ export default function TheBump({ session }: { session: any }) {
   useEffect(() => {
     if (!isBumping || complete) return;
     if (protocolStep < 2 || protocolStep > 5) return;
+
+    console.log("[TIMER] Starting Bump Animation timer for Step:", protocolStep);
     const id = setInterval(() => {
       setBumpElapsed(prev => {
         const next = prev + 1;
         const progressPctFloat = (next / bumpDurationSec) * 100;
         setVolume(Math.min(100, progressPctFloat));
+
         const progressPct = Math.floor(progressPctFloat);
         const activeBumpIdx = protocolStep - 2;
         const key = (activeBumpIdx + 10) * 1000 + progressPct;
+        
         if (!shownFocus.has(key)) {
           const bumpBubbleList = BUMP_BUBBLES[activeBumpIdx] ?? [];
           const match = bumpBubbleList.find(b => b.atPct === progressPct);
           if (match) {
+            console.log("[BUBBLE] Triggering bump bubble at", progressPct, "%");
             setActiveBubble(match.text(desire));
             if (bubbleTimerRef.current) clearTimeout(bubbleTimerRef.current);
             bubbleTimerRef.current = setTimeout(() => setActiveBubble(null), 4000);
             setShownFocus(prev2 => { const next2 = new Set(prev2); next2.add(key); return next2; });
           }
         }
+
         if (next >= bumpDurationSec) {
+          console.log("[TIMER] Bump animation complete for Step", protocolStep);
           setIsBumping(false);
           setBumpElapsed(0);
+          setShowFingerHint(true); 
+          
           const bumpIndex = protocolStep - 2;
           const newDone = [...bumpDone];
           newDone[bumpIndex] = true;
           setBumpDone(newDone);
           updateBumpTracking(newDone.filter(Boolean).length);
+          
           const nextStep = protocolStep + 1;
+          console.log("[LOG] Bump finished. Transitioning from step", protocolStep, "to", nextStep);
           setProtocolStep(nextStep);
-          setVolume(0);
+          
+          if (nextStep === 6) {
+            console.log("[LOG] Final Bump finished. Preparing for Step 6 (Return to Focus). Volume set to 0.");
+            setVolume(0);
+            showToast("Semua Bump Selesai. Balik Focus (Fokus 1 Titik).");
+          } else {
+            console.log("[LOG] Sequential Bump finished. Volume kept at 100% for next click.");
+            setVolume(100);
+            showToast(`Bump ${bumpIndex + 1} Selesai. Lanjut ke Bump ${bumpIndex + 2}.`);
+          }
           setElapsed(0);
-          if (nextStep === 6) { showToast("Semua Bump Selesai. Balik Focus (Fokus 1 Titik)."); }
-          else { showToast(`Bump ${bumpIndex + 1} Selesai. Lanjut ke Step ${nextStep}: Isi Focus.`); }
           return 0;
         }
         return next;
@@ -315,37 +426,67 @@ export default function TheBump({ session }: { session: any }) {
   const spawnRing = (color: string) => setRings(prev => [...prev, { id: ringId.current++, scale: 1, opacity: 0.75, color }]);
 
   const handleBump = (i: number) => {
-    setShowFingerHint(false);
-    if (bumpDone[i] || isBumping) return;
-    if (protocolStep !== (i + 2)) {
+    const expectedStep = i + 2;
+    console.log("[ACTION] Bump button clicked:", i + 1, "| Expected step:", expectedStep, "| Current step:", protocolStep, "| Volume:", volume);
+
+    if (bumpDone[i]) { console.log("[LOG] Bump already done."); return; }
+    if (isBumping) { console.log("[LOG] System is currently bumping."); return; }
+    
+    if (protocolStep !== expectedStep) {
+      console.warn("[LOG] Wrong step. Current:", protocolStep, "Target:", expectedStep);
       if (protocolStep === 1) showToast("Isi Focus (Volume 100%) terlebih dahulu");
       else showToast(`Sekarang adalah tahap Bump ${protocolStep - 1}`);
       return;
     }
-    if (!isVolumeFull) { showToast("Volume Fokus kamu belum cukup untuk Bump (Wajib 100%)"); return; }
+
+    if (!isVolumeFull) {
+      console.warn("[LOG] Volume not full yet. Cannot bump. Volume:", volume);
+      showToast("Volume Fokus kamu belum cukup for Bump (Wajib 100%)");
+      return;
+    }
+    
+    console.log("[LOG] All checks passed. Starting Bump", i + 1);
+    setShowFingerHint(false); 
     setIsBumping(true);
+    setVolume(0);
     spawnRing(BUMPS[i].color);
+
+    // FIX: Trigger 0% bubble immediately
+    const firstBubble = BUMP_BUBBLES[i]?.find(b => b.atPct === 0);
+    if (firstBubble) {
+      console.log("[BUBBLE] Instant trigger for 0% bubble");
+      setActiveBubble(firstBubble.text(desire));
+      if (bubbleTimerRef.current) clearTimeout(bubbleTimerRef.current);
+      bubbleTimerRef.current = setTimeout(() => setActiveBubble(null), 4000);
+      
+      // Mark as shown so timer doesn't repeat it
+      const key = (i + 10) * 1000 + 0;
+      setShownFocus(prev => { const next2 = new Set(prev); next2.add(key); return next2; });
+    }
   };
 
   const resetSession = () => {
+    console.log("[LOG] Resetting session data...");
     setVolume(0); setElapsed(0); setRunning(false); 
     setIsBumping(false); setBumpElapsed(0); setProtocolStep(1);
     setBumpDone([false,false,false,false]); setComplete(false); setRings([]);
     setActiveBubble(null); setShownFocus(new Set()); setSessionId(null);
-    setShowFingerHint(false);
+    setShowFingerHint(true); 
   };
 
   function HandleKembali() {
     if (screen === "session") {
       if (protocolStep > 1) {
         const prevStep = protocolStep - 1;
+        console.log("[LOG] Going back from step", protocolStep, "to", prevStep);
         setProtocolStep(prevStep); setIsBumping(false); setBumpElapsed(0); setRunning(false);
-        if (prevStep === 1) { setVolume(0); setElapsed(0); setBumpDone([false, false, false, false]); setActiveBubble(null); setShownFocus(new Set()); }
+        if (prevStep === 1) { setVolume(0); setElapsed(0); setBumpDone([false, false, false, false]); setActiveBubble(null); setShownFocus(new Set()); setShowFingerHint(true); }
         else {
           setVolume(100); const newDone = [...bumpDone];
           for (let i = prevStep - 2; i < 4; i++) { if (i >= 0) newDone[i] = false; }
           setBumpDone(newDone);
           setShownFocus(prev => { const next = new Set(prev); const minKeyToRemove = prevStep * 1000; for (const key of next) { if (key >= minKeyToRemove) next.delete(key); } return next; });
+          setShowFingerHint(true);
         }
         showToast(`Kembali ke Tahap ${prevStep}`);
       } else { resetSession(); setScreen("select"); }
@@ -367,7 +508,7 @@ export default function TheBump({ session }: { session: any }) {
               <div style={{ fontSize: 16, fontWeight: "bold", color: "#fff", overflow: "hidden", textOverflow: "ellipsis" }}>{userMetadata?.display_name || session?.user?.email || "Guest User"}</div>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              <button onClick={() => { setScreen("select"); setIsMenuOpen(false); }} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px", borderRadius: 8, background: screen === "select" ? "rgba(59, 130, 246, 0.1)" : "transparent", color: screen === "select" ? "#3b82f6" : "#fff", border: "none", cursor: "pointer", textAlign: "left", fontSize: 15 }}><Zap className="w-5 h-5" /> Mulai Bump Focus</button>
+              <button onClick={() => { setScreen("select"); setIsMenuOpen(false); }} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px", borderRadius: 8, background: screen === "select" ? "rgba(59, 130, 246, 0.1)" : "transparent", color: screen === "select" ? "#3b82f6" : "#fff", border: "none", cursor: "pointer", textAlign: "left", fontSize: 15 }}><ChevronLeft className="w-5 h-5" /> Mulai Bump Focus</button>
               <button onClick={() => { fetchHistory(); setScreen("history"); setIsMenuOpen(false); }} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px", borderRadius: 8, background: screen === "history" ? "rgba(59, 130, 246, 0.1)" : "transparent", color: screen === "history" ? "#3b82f6" : "#fff", border: "none", cursor: "pointer", textAlign: "left", fontSize: 15 }}><History className="w-5 h-5" /> Check History</button>
               <button onClick={() => { setScreen("settings"); setIsMenuOpen(false); }} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px", borderRadius: 8, background: screen === "settings" ? "rgba(59, 130, 246, 0.1)" : "transparent", color: screen === "settings" ? "#3b82f6" : "#fff", border: "none", cursor: "pointer", textAlign: "left", fontSize: 15 }}><Settings className="w-5 h-5" /> Settings</button>
             </div>
@@ -502,12 +643,21 @@ export default function TheBump({ session }: { session: any }) {
           </div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", alignItems: isDesktop ? "flex-start" : "center", maxWidth: 460, width: "100%", paddingTop: isDesktop ? 20 : 0 }}>
-          <div style={{ marginBottom:16,zIndex:1,display:"flex",alignItems:"center",gap:8 }}>
+          <div style={{ marginBottom:4,zIndex:1,display:"flex",alignItems:"center",gap:8 }}>
             <span style={{ fontSize:15,color:"#ffffff" }}>Keinginan:</span>
             {editingDesire ? ( <input autoFocus value={desire} onChange={e=>setDesire(e.target.value)} onBlur={()=>setEditingDesire(false)} onKeyDown={e=>e.key==="Enter"&&setEditingDesire(false)} style={{ background:"#1e293b",border:`1px solid ${diff.color}`,borderRadius:8,padding:"3px 10px",color:diff.color,fontSize:15,outline:"none" }} /> ) : ( <button onClick={()=>setEditingDesire(true)} style={{ background:diff.color+"18",border:`1px solid ${diff.color}44`,borderRadius:8,padding:"3px 12px",color:diff.color,fontSize:15,cursor:"pointer" }}>{desire} ✏️</button> )}
           </div>
+          <div style={{ fontSize: 12, color: "#94a3b8", fontStyle: "italic", marginBottom: 16, zIndex: 1 }}>*Ini adalah contoh, edit dengan goal anda</div>
           <div style={{ display:"flex",gap:12,zIndex:1,marginBottom:32,alignItems:"center" }}>
-            <button onClick={() => { if (!session && !running) { setShowLoginPrompt(true); return; } setRunning(r => !r); if (!running && protocolStep === 1 && !sessionId && session) startTracking(); }} disabled={isBumping || (isVolumeFull && protocolStep >= 2 && protocolStep <= 5)} style={{ padding:"11px 32px",borderRadius:12, background:running?"#1e293b":isBumping?"#0c1422":`linear-gradient(135deg,${diff.accent},${diff.color}88)`, border:`1px solid ${running?"#334155":diff.accent}`, color:running?"#94a3b8":"#fff",fontSize:15,fontWeight:"bold", cursor:"pointer" }}>{running?"⏸ Pause": "◎ Mulai Focus"}</button>
+            <div style={{ position: "relative" }}>
+              {protocolStep === 1 && showFingerHint && !running && (
+                <div style={{ position: "absolute", bottom: -36, left: "50%", transform: "translateX(-50%)", fontSize: 22, animation: "fingerBounceUp 0.8s ease-in-out infinite", pointerEvents: "none", zIndex: 20, filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))" }}>☝️</div>
+              )}
+              {protocolStep === 6 && showFingerHint && !running && (
+                <div style={{ position: "absolute", top: -36, left: "50%", transform: "translateX(-50%)", fontSize: 22, animation: "fingerBounce 0.8s ease-in-out infinite", pointerEvents: "none", zIndex: 20, filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))" }}>👇</div>
+              )}
+              <button onClick={() => { if (!session && !running) { setShowLoginPrompt(true); return; } if (protocolStep === 1 || protocolStep === 6) setShowFingerHint(false); setRunning(r => !r); if (!running && protocolStep === 1 && !sessionId && session) startTracking(); }} disabled={isBumping || (isVolumeFull && protocolStep >= 2 && protocolStep <= 5)} style={{ padding:"11px 32px",borderRadius:12, background:running?"#1e293b":isBumping?"#0c1422":`linear-gradient(135deg,${diff.accent},${diff.color}88)`, border:`1px solid ${running?"#334155":diff.accent}`, color:running?"#94a3b8":"#fff",fontSize:15,fontWeight:"bold", cursor:"pointer" }}>{running?"⏸ Pause":isVolumeFull && protocolStep <= 5 ?"Wajib Bump": protocolStep === 6 ? "◎ Balik Focus" : "◎ Mulai Focus"}</button>
+            </div>
             <button onClick={(e) => { e.preventDefault(); HandleKembali(); }} style={{ padding: "8px 12px", borderRadius: 8, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "#94a3b8", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}><ChevronLeft className="w-3 h-3" /> Kembali</button>
           </div>
           {showLoginPrompt && ( <div style={{ position:"fixed",inset:0,background:"#000000cc",zIndex:3000,display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}><div style={{ background:"#0f172a",border:`1px solid #3b82f644`,borderRadius:20,maxWidth:400,width:"100%",padding:"32px 24px",textAlign:"center" }}><div style={{ fontSize:40,marginBottom:16 }}>🔒</div><h2 style={{ fontSize:22,color:"#fff",marginBottom:12 }}>Login Terlebih Dahulu</h2><p style={{ fontSize:15,color:"#94a3b8",lineHeight:1.6,marginBottom:24 }}>Simpan progress fokus dan histori pencapaian Anda.</p><div style={{ display:"flex",flexDirection:"column",gap:12 }}><button onClick={() => window.location.href = "/auth"} style={{ width:"100%",padding:"14px",borderRadius:12,background:"#3b82f6",color:"#fff",fontWeight:"bold",fontSize:15,cursor:"pointer",border:"none" }}>Login Sekarang →</button><button onClick={() => setShowLoginPrompt(false)} style={{ width:"100%",padding:"14px",borderRadius:12,background:"transparent",color:"#94a3b8",fontSize:15,cursor:"pointer",border:"1px solid #334155" }}>Nanti Saja</button></div></div></div> )}
@@ -523,6 +673,7 @@ export default function TheBump({ session }: { session: any }) {
       <style>{` 
         @keyframes fadeIn { from { opacity: 0; transform: translate(-50%, 20px); } to { opacity: 1; transform: translate(-50%, 0); } } 
         @keyframes fingerBounce { 0% { transform: translateY(0px) translateX(-50%); } 50% { transform: translateY(-8px) translateX(-50%); } 100% { transform: translateY(0px) translateX(-50%); } }
+        @keyframes fingerBounceUp { 0% { transform: translateY(0px) translateX(-50%); } 50% { transform: translateY(8px) translateX(-50%); } 100% { transform: translateY(0px) translateX(-50%); } }
       `}</style>
     </div>
   );
