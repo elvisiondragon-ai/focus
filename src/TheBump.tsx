@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 
 const DIFFICULTIES = [
-  { id: "easy",   label: "Easy",   icon: "🌱", bengongSec: 60,   color: "#4ade80", accent: "#16a34a", desc: "1 Menit Bengong" },
-  { id: "medium", label: "Medium", icon: "🔥", bengongSec: 300,  color: "#fbbf24", accent: "#d97706", desc: "5 Menit Bengong" },
-  { id: "hard",   label: "Hard",   icon: "⚡", bengongSec: 600,  color: "#f87171", accent: "#dc2626", desc: "10 Menit Bengong" },
-  { id: "elzen",  label: "eL Zen", icon: "🌌", bengongSec: 1200, color: "#c4b5fd", accent: "#7c3aed", desc: "20 Menit Bengong" },
+  { id: "easy",   label: "Easy",   icon: "🌱", focusSec: 60,   color: "#4ade80", accent: "#16a34a", desc: "1 Menit Focus" },
+  { id: "medium", label: "Medium", icon: "🔥", focusSec: 300,  color: "#fbbf24", accent: "#d97706", desc: "5 Menit Focus" },
+  { id: "hard",   label: "Hard",   icon: "⚡", focusSec: 600,  color: "#f87171", accent: "#dc2626", desc: "10 Menit Focus" },
+  { id: "elzen",  label: "eL Zen", icon: "🌌", focusSec: 1200, color: "#c4b5fd", accent: "#7c3aed", desc: "20 Menit Focus" },
 ];
 
 const BUMPS = [
@@ -28,9 +28,9 @@ interface TutorialProps {
 
 function Tutorial({ onClose, accentColor }: TutorialProps) {
   const steps = [
-    { icon: "◎", title: "Step 1: Isi Bengong", body: "Isi volume hingga 100% dengan fokus tenang pada satu titik." },
-    { icon: "⚡", title: "Step 2-5: The Bumps", body: "Lakukan Bump 1 hingga 4 secara berurutan. Setiap Bump mengambil durasi 25% dari waktu bengong Anda." },
-    { icon: "🌊", title: "Step 6: Balik Bengong", body: "Setelah semua Bump selesai, kembali isi volume hingga 100% untuk mengunci hasil latihan." },
+    { icon: "◎", title: "Step 1: Isi Focus", body: "Isi volume hingga 100% dengan fokus tenang pada satu titik." },
+    { icon: "⚡", title: "Step 2-5: The Bumps", body: "Lakukan Bump 1 hingga 4 secara berurutan. Setiap Bump mengambil durasi 25% dari waktu focus Anda." },
+    { icon: "🌊", title: "Step 6: Balik Focus", body: "Setelah semua Bump selesai, kembali isi volume hingga 100% untuk mengunci hasil latihan." },
     { icon: "🌸", title: "Kunci Utama", body: "Selesaikan 6 tahap protokol secara disiplin tanpa terburu-buru." },
   ];
   return (
@@ -97,10 +97,10 @@ export default function TheBump() {
   }, [screen]);
 
   const diff = DIFFICULTIES.find(d => d.id === diffId) || DIFFICULTIES[0];
-  const bumpDurationSec = diff.bengongSec * 0.25;
+  const bumpDurationSec = diff.focusSec * 0.25;
   const isVolumeFull = volume >= 100;
 
-  // Timer: Bengong Phase (Step 1 & Step 6)
+  // Timer: Focus Phase (Step 1 & Step 6)
   useEffect(() => {
     if (!running || isBumping || complete) return;
     if (protocolStep !== 1 && protocolStep !== 6) return;
@@ -108,7 +108,7 @@ export default function TheBump() {
     const id = setInterval(() => {
       setElapsed(e => {
         const next = e + 1;
-        const pct = Math.min(100, (next / diff.bengongSec) * 100);
+        const pct = Math.min(100, (next / diff.focusSec) * 100);
         setVolume(pct);
         if (pct >= 100) {
           setRunning(false);
@@ -151,7 +151,7 @@ export default function TheBump() {
           setElapsed(0);
           
           if (nextStep === 6) {
-            showToast("Semua Bump Selesai. Balik Bengong (Fokus 1 Titik).");
+            showToast("Semua Bump Selesai. Balik Focus (Fokus 1 Titik).");
           } else {
             showToast(`Bump ${bumpIndex + 1} Selesai. Lanjut ke Bump ${bumpIndex + 2}.`);
           }
@@ -190,7 +190,7 @@ export default function TheBump() {
     // Check if it's the correct sequential bump
     if (protocolStep !== (i + 2)) {
       if (protocolStep === 1) {
-        showToast("Isi Bengong (Volume 100%) terlebih dahulu");
+        showToast("Isi Focus (Volume 100%) terlebih dahulu");
       } else {
         showToast(`Sekarang adalah tahap Bump ${protocolStep - 1}`);
       }
@@ -300,7 +300,7 @@ export default function TheBump() {
           <h1 style={{ fontSize: isDesktop ? 64 : 54,fontWeight:300,margin:0,letterSpacing:4,color:"#ffffff" }}>
             The <span style={{ fontStyle:"italic",color:"#7dd3fc" }}>Bump</span>
           </h1>
-          <p style={{ fontSize:15,color:"#ffffff",marginTop:8,letterSpacing:1 }}>Sundul · Bengong yang Terarah · Realitas yang Dalam</p>
+          <p style={{ fontSize:15,color:"#ffffff",marginTop:8,letterSpacing:1 }}>Sundul · Focus yang Terarah · Realitas yang Dalam</p>
         </div>
 
 
@@ -332,7 +332,7 @@ export default function TheBump() {
               <div style={{ fontSize:22,marginBottom:6 }}>{d.icon}</div>
               <div style={{ fontSize:15,color:diffId===d.id?d.color:"#ffffff",fontWeight:"bold",fontFamily:"Georgia,serif" }}>{d.label}</div>
               <div style={{ fontSize:15,color:"#ffffff",marginTop:3 }}>{d.desc}</div>
-              <div style={{ fontSize:15,color:diffId===d.id?d.color+"99":"#334155",marginTop:6 }}>Bump Durasi = {fmt(d.bengongSec*0.25)}</div>
+              <div style={{ fontSize:15,color:diffId===d.id?d.color+"99":"#334155",marginTop:6 }}>Bump Durasi = {fmt(d.focusSec*0.25)}</div>
             </button>
           ))}
         </div>
@@ -454,14 +454,14 @@ color:"#ffffff",position:"relative",overflowX:"hidden" }}>
                 {isBumping ? "Bumping..." : protocolStep === 6 ? "Penyelesaian" : "Volume"}
               </div>
               <div style={{ fontSize:15,color:"#ffffff",marginTop:3 }}>
-                {isBumping ? `sisa ${fmt(Math.max(0, bumpDurationSec - bumpElapsed))}` : running ? `sisa ${fmt(Math.max(0,diff.bengongSec-elapsed))}` : volume>=100 ? (protocolStep === 6 ? "Hampir Selesai!" : "Siap Bump!") : "paused"}
+                {isBumping ? `sisa ${fmt(Math.max(0, bumpDurationSec - bumpElapsed))}` : running ? `sisa ${fmt(Math.max(0,diff.focusSec-elapsed))}` : volume>=100 ? (protocolStep === 6 ? "Hampir Selesai!" : "Siap Bump!") : "paused"}
               </div>
             </div>
           </div>
 
           <div style={{ marginTop:8,zIndex:1,display:"flex",gap:16,alignItems:"center", marginBottom: isDesktop ? 0 : 24 }}>
             {[
-              { label:"Bengong", val:fmt(elapsed) },
+              { label:"Focus", val:fmt(elapsed) },
               { label:"Protocol", val:isBumping ? "Bumping" : `Step ${protocolStep}/6` },
               { label:"Status", val:`${bumpDone.filter(Boolean).length}/4` },
             ].map((s,i) => (
@@ -502,7 +502,7 @@ color:"#ffffff",position:"relative",overflowX:"hidden" }}>
               color:running?"#94a3b8":"#fff",fontSize:15,fontWeight:"bold",
               cursor:(isBumping || (isVolumeFull && protocolStep >= 2 && protocolStep <= 5)) ?"not-allowed":"pointer",letterSpacing:1,transition:"all 0.3s",
             }}>
-              {running?"⏸ Pause":isVolumeFull && protocolStep <= 5 ?"Wajib Bump": protocolStep === 6 ? "◎ Balik Bengong" : "◎ Mulai Bengong"}
+              {running?"⏸ Pause":isVolumeFull && protocolStep <= 5 ?"Wajib Bump": protocolStep === 6 ? "◎ Balik Focus" : "◎ Mulai Focus"}
             </button>
           </div>
 
@@ -555,7 +555,7 @@ color:"#ffffff",position:"relative",overflowX:"hidden" }}>
             )}
             {protocolStep === 6 && !isVolumeFull && (
               <div style={{ textAlign: "center", marginTop:16, fontSize:15, color:diff.color, fontStyle:"italic" }}>
-                 Tahap 6: Balik Bengong. Fokus 1 Titik hingga Volume 100%...
+                 Tahap 6: Balik Focus. Fokus 1 Titik hingga Volume 100%...
               </div>
             )}
           </div>
