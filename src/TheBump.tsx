@@ -40,9 +40,9 @@ function Tutorial({ onClose, accentColor }: TutorialProps) {
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18 }}>
           <div>
             <div style={{ fontSize:10,letterSpacing:4,color:accentColor,textTransform:"uppercase" }}>Panduan Lengkap</div>
-            <div style={{ fontSize:24,color:"#f8fafc",fontFamily:"Georgia,serif",marginTop:2 }}>The Bump Method Protocol</div>
+            <div style={{ fontSize:24,color:"#ffffff",fontFamily:"Georgia,serif",marginTop:2 }}>The Bump Method Protocol</div>
           </div>
-          <button onClick={onClose} style={{ background:"#1e293b",border:"1px solid #334155",borderRadius:8,color:"#94a3b8",width:34,height:34,cursor:"pointer",fontSize:15 }}>✕</button>
+          <button onClick={onClose} style={{ background:"#1e293b",border:"1px solid #334155",borderRadius:8,color:"#ffffff",width:34,height:34,cursor:"pointer",fontSize:15 }}>✕</button>
         </div>
         <div style={{ display:"grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap:12 }}>
           {steps.map((s, i) => (
@@ -50,7 +50,7 @@ function Tutorial({ onClose, accentColor }: TutorialProps) {
               <div style={{ fontSize:16,minWidth:30,height:30,borderRadius:8,background:accentColor+"22",display:"flex",alignItems:"center",justifyContent:"center",color:accentColor }}>{s.icon}</div>
               <div>
                 <div style={{ fontSize:11,color:accentColor,fontWeight:"bold",marginBottom:2 }}>{i+1}. {s.title}</div>
-                <div style={{ fontSize:11,color:"#94a3b8",lineHeight:1.6 }}>{s.body}</div>
+                <div style={{ fontSize:11,color:"#ffffff",lineHeight:1.6 }}>{s.body}</div>
               </div>
             </div>
           ))}
@@ -228,18 +228,18 @@ export default function TheBump() {
   if (screen === "select") {
     const selDiff = DIFFICULTIES.find(d => d.id === diffId);
     return (
-      <div style={{ minHeight:"100vh", width: "100%", background:"radial-gradient(ellipse at 50% 0%,#0c1445 0%,#020617 70%)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"32px 16px",fontFamily:"Georgia,'Times New Roman',serif",color:"#e2e8f0", position: "relative" }}>
+      <div style={{ minHeight:"100vh", width: "100%", background:"radial-gradient(ellipse at 50% 0%,#0c1445 0%,#020617 70%)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"32px 16px",fontFamily:"Georgia,'Times New Roman',serif",color:"#ffffff", position: "relative" }}>
         <KembaliBtn />
         {showTutorial && <Tutorial onClose={() => setShowTutorial(false)} accentColor="#7dd3fc" />}
 
         <div style={{ textAlign:"center",marginBottom:20 }}>
           <img src="/logo.png" alt="Logo" style={{ width: 80, height: 80, marginBottom: 16, borderRadius: "50%", boxShadow: "0 0 20px rgba(125, 211, 252, 0.3)" }} />
-          <div style={{ fontSize:9,letterSpacing:8,color:"#334155",textTransform:"uppercase",marginBottom:8 }}>eL Vision Group</div>
+          <div style={{ fontSize:9,letterSpacing:8,color:"#ffffff",textTransform:"uppercase",marginBottom:8 }}>eL Vision Group</div>
           <div style={{ fontSize:10,letterSpacing:5,color:"#7dd3fc",textTransform:"uppercase",marginBottom:6 }}>Metode Fokus Konsentrasi</div>
-          <h1 style={{ fontSize: isDesktop ? 64 : 54,fontWeight:300,margin:0,letterSpacing:4,color:"#f8fafc" }}>
+          <h1 style={{ fontSize: isDesktop ? 64 : 54,fontWeight:300,margin:0,letterSpacing:4,color:"#ffffff" }}>
             The <span style={{ fontStyle:"italic",color:"#7dd3fc" }}>Bump</span>
           </h1>
-          <p style={{ fontSize:12,color:"#64748b",marginTop:8,letterSpacing:1 }}>Sundul · Bengong yang Terarah · Realitas yang Dalam</p>
+          <p style={{ fontSize:12,color:"#ffffff",marginTop:8,letterSpacing:1 }}>Sundul · Bengong yang Terarah · Realitas yang Dalam</p>
         </div>
 
 
@@ -254,7 +254,7 @@ export default function TheBump() {
           }}>
             ? The Protocol
           </button>
-          <div style={{ fontSize:13,color:"#94a3b8",lineHeight:1.7,maxWidth:320,margin:"0 auto" }}>
+          <div style={{ fontSize:13,color:"#ffffff",lineHeight:1.7,maxWidth:320,margin:"0 auto" }}>
             Pilih tingkat kesulitan sesuai kemampuan fokusmu saat ini
           </div>
         </div>
@@ -269,8 +269,8 @@ export default function TheBump() {
               boxShadow: diffId===d.id ? `0 0 22px ${d.color}33` : "none",
             }}>
               <div style={{ fontSize:22,marginBottom:6 }}>{d.icon}</div>
-              <div style={{ fontSize:14,color:diffId===d.id?d.color:"#e2e8f0",fontWeight:"bold",fontFamily:"Georgia,serif" }}>{d.label}</div>
-              <div style={{ fontSize:11,color:"#64748b",marginTop:3 }}>{d.desc}</div>
+              <div style={{ fontSize:14,color:diffId===d.id?d.color:"#ffffff",fontWeight:"bold",fontFamily:"Georgia,serif" }}>{d.label}</div>
+              <div style={{ fontSize:11,color:"#ffffff",marginTop:3 }}>{d.desc}</div>
               <div style={{ fontSize:10,color:diffId===d.id?d.color+"99":"#334155",marginTop:6 }}>Bump Durasi = {fmt(d.bengongSec*0.25)}</div>
             </button>
           ))}
@@ -286,7 +286,7 @@ export default function TheBump() {
           }}>Mulai Sesi →</button>
         </div>
 
-        <div style={{ marginTop:32,fontSize:9,color:"#1e293b",letterSpacing:1 }}>© eL Vision Group</div>
+        <div style={{ marginTop:32,fontSize:9,color:"#ffffff",letterSpacing:1 }}>© eL Vision Group</div>
       </div>
     );
   }
@@ -307,7 +307,7 @@ export default function TheBump() {
       // //////////////////////////////////////////////////////////////////
       padding: isDesktop ? "48px 80px" : "18px 16px 48px",
       fontFamily:"Georgia,'Times New Roman',serif",
-color:"#e2e8f0",position:"relative",overflowX:"hidden" }}>
+color:"#ffffff",position:"relative",overflowX:"hidden" }}>
       <KembaliBtn />
       <Toast />
       {showTutorial && <Tutorial onClose={() => setShowTutorial(false)} accentColor={diff.color} />}
@@ -318,8 +318,8 @@ color:"#e2e8f0",position:"relative",overflowX:"hidden" }}>
           <div style={{ background:"#0f172a",border:`1px solid ${diff.color}44`,borderRadius:20,padding:"30px 26px",textAlign:"center",maxWidth:320 }}>
             <div style={{ fontSize:46,marginBottom:10 }}>🌸</div>
             <div style={{ fontSize:10,color:diff.color,letterSpacing:3,textTransform:"uppercase",marginBottom:6 }}>Semua Bump Selesai</div>
-            <div style={{ fontSize:19,color:"#f8fafc",fontFamily:"Georgia,serif",marginBottom:10 }}>Misi Fokus Berhasil</div>
-            <div style={{ fontSize:12,color:"#94a3b8",lineHeight:1.7,marginBottom:18 }}>
+            <div style={{ fontSize:19,color:"#ffffff",fontFamily:"Georgia,serif",marginBottom:10 }}>Misi Fokus Berhasil</div>
+            <div style={{ fontSize:12,color:"#ffffff",lineHeight:1.7,marginBottom:18 }}>
               Sistem telah ter-install di bawah sadar.<br/>
               Pertahankan kejernihan ini sepanjang hari.
             </div>
@@ -336,9 +336,9 @@ color:"#e2e8f0",position:"relative",overflowX:"hidden" }}>
         width: "100%" 
       }}>
         <img src="/logo.png" alt="Logo" style={{ width: 40, height: 40, marginBottom: 8, borderRadius: "50%" }} />
-        <div style={{ fontSize:8,letterSpacing:6,color:"#1e293b",textTransform:"uppercase" }}>eL Vision Group</div>
+        <div style={{ fontSize:8,letterSpacing:6,color:"#ffffff",textTransform:"uppercase" }}>eL Vision Group</div>
         <div style={{ display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginTop:2 }}>
-          <h1 style={{ fontSize: isDesktop ? 42 : 26,fontWeight:300,margin:0,letterSpacing:3,color:"#f8fafc" }}>
+          <h1 style={{ fontSize: isDesktop ? 42 : 26,fontWeight:300,margin:0,letterSpacing:3,color:"#ffffff" }}>
             The <span style={{ fontStyle:"italic",color:diff.color,transition:"color 0.8s" }}>Bump</span>
           </h1>
           <span style={{ fontSize:9,padding:"3px 8px",borderRadius:20,background:diff.color+"22",border:`1px solid ${diff.color}55`,color:diff.color,letterSpacing:1 }}>{diff.icon} {diff.label}</span>
@@ -387,12 +387,12 @@ color:"#e2e8f0",position:"relative",overflowX:"hidden" }}>
             </svg>
             <div style={{ position:"absolute",top:"50%",left:"50%",transform:`translate(-50%,-50%) scale(${pulseScale})`,textAlign:"center" }}>
               <div style={{ fontSize:50,fontWeight:300,color:isBumping ? BUMPS[activeBumpIdx || 0].color : diff.color,lineHeight:1,letterSpacing:-2,transition:"color 0.8s" }}>
-                {Math.floor(volume)}<span style={{ fontSize:16,color:"#64748b" }}>%</span>
+                {Math.floor(volume)}<span style={{ fontSize:16,color:"#ffffff" }}>%</span>
               </div>
               <div style={{ fontSize:9,color:isBumping ? BUMPS[activeBumpIdx || 0].accent : diff.accent,letterSpacing:3,textTransform:"uppercase",marginTop:2 }}>
                 {isBumping ? "Bumping..." : "Volume"}
               </div>
-              <div style={{ fontSize:10,color:"#475569",marginTop:3 }}>
+              <div style={{ fontSize:10,color:"#ffffff",marginTop:3 }}>
                 {isBumping ? `sisa ${fmt(Math.max(0, bumpDurationSec - bumpElapsed))}` : running ? `sisa ${fmt(Math.max(0,diff.bengongSec-elapsed))}` : volume>=100?"Siap Bump!":"paused"}
               </div>
             </div>
@@ -407,7 +407,7 @@ color:"#e2e8f0",position:"relative",overflowX:"hidden" }}>
               <div key={i} style={{ display:"flex",alignItems:"center",gap:16 }}>
                 {i>0&&<div style={{ width:1,height:28,background:"#1e293b" }}/>}
                 <div style={{ textAlign:"center" }}>
-                  <div style={{ fontSize:9,color:"#334155",letterSpacing:2,textTransform:"uppercase" }}>{s.label}</div>
+                  <div style={{ fontSize:9,color:"#ffffff",letterSpacing:2,textTransform:"uppercase" }}>{s.label}</div>
                   <div style={{ fontSize:16,color:diff.color }}>{s.val}</div>
                 </div>
               </div>
@@ -425,7 +425,7 @@ color:"#e2e8f0",position:"relative",overflowX:"hidden" }}>
           paddingTop: isDesktop ? 20 : 0
         }}>
           <div style={{ marginBottom:16,zIndex:1,display:"flex",alignItems:"center",gap:8 }}>
-            <span style={{ fontSize:10,color:"#475569" }}>Keinginan:</span>
+            <span style={{ fontSize:10,color:"#ffffff" }}>Keinginan:</span>
             {editingDesire ? (
               <input autoFocus value={desire} onChange={e=>setDesire(e.target.value)} onBlur={()=>setEditingDesire(false)} onKeyDown={e=>e.key==="Enter"&&setEditingDesire(false)} style={{ background:"#1e293b",border:`1px solid ${diff.color}`,borderRadius:8,padding:"3px 10px",color:diff.color,fontSize:12,outline:"none",minWidth:120 }} />
             ) : (
@@ -443,12 +443,12 @@ color:"#e2e8f0",position:"relative",overflowX:"hidden" }}>
             }}>
               {running?"⏸ Pause":isVolumeFull?"Wajib Bump":"◎ Mulai Bengong"}
             </button>
-            <button onClick={resetSession} style={{ padding:"11px 13px",borderRadius:12,background:"transparent",border:"1px solid #1e293b",color:"#475569",cursor:"pointer",fontSize:13 }}>↺</button>
-            <button onClick={()=>{ resetSession(); setScreen("select"); }} style={{ padding:"11px 13px",borderRadius:12,background:"transparent",border:"1px solid #1e293b",color:"#475569",cursor:"pointer",fontSize:12 }}>⟵</button>
+            <button onClick={resetSession} style={{ padding:"11px 13px",borderRadius:12,background:"transparent",border:"1px solid #1e293b",color:"#ffffff",cursor:"pointer",fontSize:13 }}>↺</button>
+            <button onClick={()=>{ resetSession(); setScreen("select"); }} style={{ padding:"11px 13px",borderRadius:12,background:"transparent",border:"1px solid #1e293b",color:"#ffffff",cursor:"pointer",fontSize:12 }}>⟵</button>
           </div>
 
           <div style={{ zIndex:1,width:"100%" }}>
-            <div style={{ fontSize:9,color:"#334155",letterSpacing:3,textTransform:"uppercase",textAlign: isDesktop ? "left" : "center", marginBottom:12 }}>
+            <div style={{ fontSize:9,color:"#ffffff",letterSpacing:3,textTransform:"uppercase",textAlign: isDesktop ? "left" : "center", marginBottom:12 }}>
               ⚡ PROTOKOL BUMP — Wajib 100% Vol
             </div>
             <div style={{ display:"grid", gridTemplateColumns: isDesktop ? "1fr 1fr" : "1fr 1fr", gap: isDesktop ? 14 : 12, width: "100%" }}>
@@ -463,7 +463,7 @@ color:"#e2e8f0",position:"relative",overflowX:"hidden" }}>
                     padding: isDesktop ? "20px 16px" : "12px 10px",
                     borderRadius:12,cursor: done || isBumping ? "default" : isNext ? "pointer" : "not-allowed",
                     background:done?"#0f172a":active?b.color+"44":canClick?b.color+"33":"#0c1422",
-                    border:`1.5px solid ${done?"#1e293b":active?b.color:canClick?b.color:"#1e293b"}`,
+                    border:`1.5px solid ${done?"#1e293b":active?b.color:canClick?b.color:"#ffffff"}`,
                     textAlign:"left",transition:"all 0.3s",
                     opacity: done ? 0.6 : isNext || active ? 1 : 0.4,
                     transform:active?"scale(0.96)":canClick?"scale(1.02)":"scale(1)",
@@ -498,7 +498,7 @@ color:"#e2e8f0",position:"relative",overflowX:"hidden" }}>
         </div>
       </div>
 
-      <div style={{ marginTop: isDesktop ? 60 : 24,fontSize:9,color:"#1e293b",letterSpacing:1,zIndex:1 }}>© eL Vision Group · The Bump Method</div>
+      <div style={{ marginTop: isDesktop ? 60 : 24,fontSize:9,color:"#ffffff",letterSpacing:1,zIndex:1 }}>© eL Vision Group · The Bump Method</div>
       
       <style>{`
         @keyframes fadeIn {
