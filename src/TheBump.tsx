@@ -77,7 +77,7 @@ export default function TheBump() {
   const [bumpDone, setBumpDone] = useState([false,false,false,false]);
   const [rings, setRings] = useState<any[]>([]);
   const [showTutorial, setShowTutorial] = useState(true);
-  const [desire, setDesire] = useState("Keinginanku");
+  const [desire, setDesire] = useState("Contoh: Bisnis tembus 100 juta");
   const [editingDesire, setEditingDesire] = useState(false);
   const [complete, setComplete] = useState(false);
   const [pulseT, setPulseT] = useState(0);
