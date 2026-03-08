@@ -40,7 +40,7 @@ function App() {
         />
         <Route 
           path="/" 
-          element={session ? <TheBump /> : <Navigate to="/auth" />} 
+          element={<TheBump session={session} />} 
         />
       </Routes>
     </BrowserRouter>

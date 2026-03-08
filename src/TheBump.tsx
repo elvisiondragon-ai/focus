@@ -96,8 +96,9 @@ function Tutorial({ onClose, accentColor }: TutorialProps) {
   );
 }
 
-export default function TheBump() {
+export default function TheBump({ session }: { session?: any }) {
   const [screen, setScreen] = useState("select");
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [diffId, setDiffId] = useState<string | null>(null);
   const [volume, setVolume] = useState(0);
   const [running, setRunning] = useState(false);
@@ -477,7 +478,17 @@ export default function TheBump() {
         </div>
 
         <div style={{ display:"flex",gap:10 }}>
-          <button onClick={() => { if (diffId) { resetSession(); setScreen("session"); startTracking(); } }} style={{
+          <button onClick={() => { 
+            if (diffId) { 
+              if (!session) {
+                setShowLoginPrompt(true);
+                return;
+              }
+              resetSession(); 
+              setScreen("session"); 
+              startTracking(); 
+            } 
+          }} style={{
             padding:"13px 40px",borderRadius:12,
             background: diffId ? `linear-gradient(135deg,${selDiff?.accent},${selDiff?.color}88)` : "#1e293b",
             border:`1px solid ${diffId ? selDiff?.color : "#334155"}`,
@@ -485,6 +496,33 @@ export default function TheBump() {
             cursor:diffId?"pointer":"not-allowed",letterSpacing:1,transition:"all 0.4s",
           }}>Mulai Sesi →</button>
         </div>
+
+        {/* LOGIN PROMPT MODAL */}
+        {showLoginPrompt && (
+          <div style={{ position:"fixed",inset:0,background:"#000000cc",zIndex:3000,display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}>
+            <div style={{ background:"#0f172a",border:`1px solid #3b82f644`,borderRadius:20,maxWidth:400,width:"100%",padding:"32px 24px",textAlign:"center" }}>
+              <div style={{ fontSize:40,marginBottom:16 }}>🔒</div>
+              <h2 style={{ fontSize:22,color:"#fff",marginBottom:12 }}>Login Terlebih Dahulu</h2>
+              <p style={{ fontSize:15,color:"#94a3b8",lineHeight:1.6,marginBottom:24 }}>
+                Simpan progress fokus dan histori pencapaian Anda dengan masuk ke akun eL Vision.
+              </p>
+              <div style={{ display:"flex",flexDirection:"column",gap:12 }}>
+                <button 
+                  onClick={() => window.location.href = "/auth"} 
+                  style={{ width:"100%",padding:"14px",borderRadius:12,background:"#3b82f6",color:"#fff",fontWeight:"bold",fontSize:15,cursor:"pointer",border:"none" }}
+                >
+                  Login Sekarang →
+                </button>
+                <button 
+                  onClick={() => setShowLoginPrompt(false)} 
+                  style={{ width:"100%",padding:"14px",borderRadius:12,background:"transparent",color:"#94a3b8",fontSize:15,cursor:"pointer",border:"1px solid #334155" }}
+                >
+                  Nanti Saja
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
