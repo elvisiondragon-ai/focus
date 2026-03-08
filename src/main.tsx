@@ -3,7 +3,18 @@ import ReactDOM from 'react-dom/client'
 import App from './App'
 import './index.css'
 
-const APP_VERSION = '2026.03.08.02'; // UI adjustments and finger hint logic fix
+// Clean up cache-busting URL parameter if it exists to keep address bar clean
+if (typeof window !== 'undefined') {
+  const url = new URL(window.location.href);
+  if (url.searchParams.has('v') || url.searchParams.has('ios_cache_bust')) {
+    url.searchParams.delete('v');
+    url.searchParams.delete('ios_cache_bust');
+    const cleanUrl = url.pathname + url.search + url.hash;
+    window.history.replaceState({}, '', cleanUrl === '' ? '/' : cleanUrl);
+  }
+}
+
+const APP_VERSION = '2026.03.08.03'; // UI adjustments and finger hint logic fix, URL cleanup
 
 // Execute aggressive cache clearing before React mounts if versions mismatch
 if (localStorage.getItem('v_cache') !== APP_VERSION) {
