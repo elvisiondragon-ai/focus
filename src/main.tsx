@@ -14,7 +14,7 @@ if (typeof window !== 'undefined') {
   }
 }
 
-const APP_VERSION = '2026.03.08.03'; // UI adjustments and finger hint logic fix, URL cleanup
+const APP_VERSION = '2026.03.08.04'; // UI adjustments, URL cleanup, Guest Login button
 
 // Execute aggressive cache clearing before React mounts if versions mismatch
 if (localStorage.getItem('v_cache') !== APP_VERSION) {

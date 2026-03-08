@@ -513,7 +513,15 @@ export default function TheBump({ session }: { session: any }) {
               <button onClick={() => { setScreen("settings"); setIsMenuOpen(false); }} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px", borderRadius: 8, background: screen === "settings" ? "rgba(59, 130, 246, 0.1)" : "transparent", color: screen === "settings" ? "#3b82f6" : "#fff", border: "none", cursor: "pointer", textAlign: "left", fontSize: 15 }}><Settings className="w-5 h-5" /> Settings</button>
             </div>
             <div style={{ marginTop: "auto" }}>
-              <button onClick={handleLogout} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px", borderRadius: 8, color: "#f87171", border: "none", background: "none", cursor: "pointer", width: "100%", textAlign: "left", fontSize: 15 }}><LogOut className="w-5 h-5" /> Logout</button>
+              {session?.user ? (
+                <button onClick={handleLogout} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px", borderRadius: 8, color: "#f87171", border: "none", background: "none", cursor: "pointer", width: "100%", textAlign: "left", fontSize: 15 }}>
+                  <LogOut className="w-5 h-5" /> Logout
+                </button>
+              ) : (
+                <button onClick={() => window.location.href = "/auth"} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px", borderRadius: 8, color: "#3b82f6", border: "none", background: "rgba(59, 130, 246, 0.1)", cursor: "pointer", width: "100%", textAlign: "left", fontSize: 15, fontWeight: "bold" }}>
+                  <Zap className="w-5 h-5" /> Login
+                </button>
+              )}
             </div>
           </motion.div>
         </>
