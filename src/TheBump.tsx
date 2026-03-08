@@ -233,6 +233,7 @@ export default function TheBump({ session }: { session: any }) {
   const handleLogout = async () => {
     console.log("[AUTH] Logging out...");
     await supabase.auth.signOut();
+    setUserMetadata(null);
     window.location.href = "/auth";
   };
 
@@ -509,8 +510,13 @@ export default function TheBump({ session }: { session: any }) {
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               <button onClick={() => { setScreen("select"); setIsMenuOpen(false); }} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px", borderRadius: 8, background: screen === "select" ? "rgba(59, 130, 246, 0.1)" : "transparent", color: screen === "select" ? "#3b82f6" : "#fff", border: "none", cursor: "pointer", textAlign: "left", fontSize: 15 }}><ChevronLeft className="w-5 h-5" /> Mulai Bump Focus</button>
-              <button onClick={() => { fetchHistory(); setScreen("history"); setIsMenuOpen(false); }} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px", borderRadius: 8, background: screen === "history" ? "rgba(59, 130, 246, 0.1)" : "transparent", color: screen === "history" ? "#3b82f6" : "#fff", border: "none", cursor: "pointer", textAlign: "left", fontSize: 15 }}><History className="w-5 h-5" /> Check History</button>
-              <button onClick={() => { setScreen("settings"); setIsMenuOpen(false); }} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px", borderRadius: 8, background: screen === "settings" ? "rgba(59, 130, 246, 0.1)" : "transparent", color: screen === "settings" ? "#3b82f6" : "#fff", border: "none", cursor: "pointer", textAlign: "left", fontSize: 15 }}><Settings className="w-5 h-5" /> Settings</button>
+              
+              {session?.user && (
+                <>
+                  <button onClick={() => { fetchHistory(); setScreen("history"); setIsMenuOpen(false); }} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px", borderRadius: 8, background: screen === "history" ? "rgba(59, 130, 246, 0.1)" : "transparent", color: screen === "history" ? "#3b82f6" : "#fff", border: "none", cursor: "pointer", textAlign: "left", fontSize: 15 }}><History className="w-5 h-5" /> Check History</button>
+                  <button onClick={() => { setScreen("settings"); setIsMenuOpen(false); }} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px", borderRadius: 8, background: screen === "settings" ? "rgba(59, 130, 246, 0.1)" : "transparent", color: screen === "settings" ? "#3b82f6" : "#fff", border: "none", cursor: "pointer", textAlign: "left", fontSize: 15 }}><Settings className="w-5 h-5" /> Settings</button>
+                </>
+              )}
             </div>
             <div style={{ marginTop: "auto" }}>
               {session?.user ? (

@@ -14,7 +14,7 @@ if (typeof window !== 'undefined') {
   }
 }
 
-const APP_VERSION = '2026.03.08.08'; // UI adjustments, URL cleanup, Guest Login, Updated completion message, Ecosystem Login message, PWA Icon fix
+const APP_VERSION = '2026.03.08.09'; // UI adjustments, URL cleanup, Guest Login, Updated completion message, Ecosystem Login message, PWA Icon fix, Auth UI fix
 
 // Execute aggressive cache clearing before React mounts if versions mismatch
 if (localStorage.getItem('v_cache') !== APP_VERSION) {
