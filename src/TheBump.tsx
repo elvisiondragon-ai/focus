@@ -28,19 +28,18 @@ interface TutorialProps {
 
 function Tutorial({ onClose, accentColor }: TutorialProps) {
   const steps = [
-    { icon: "◎", title: "Pilih Tingkat Kesulitan", body: "Easy (1 menit) hingga eL Zen (20 menit). Anda harus Bengong hingga Volume 100% sebelum bisa melakukan Bump." },
-    { icon: "🌊", title: "Mulai Bengong — Isi Volume", body: "Tekan MULAI BENGONG. Fokuskan perhatian ke satu titik. Anda harus mencapai 100% volume (waktu penuh) untuk mengaktifkan Bump." },
-    { icon: "⚡", title: "Prinsip Bump (25%)", body: "Setiap Bump membutuhkan waktu 25% dari total waktu bengong. Contoh: Di level Easy (1 menit), setiap Bump berdurasi 15 detik." },
-    { icon: "✦", title: "Proses Bump", body: "Klik Bump saat volume 100%. Tunggu hingga durasi Bump selesai. Setelah selesai, volume akan kosong dan Anda harus Bengong kembali hingga 100% untuk Bump berikutnya." },
-    { icon: "🌸", title: "Urutan Protokol", body: "Selesaikan Bump 1 hingga 4 secara berurutan. Di sela-sela Bump, kembalikan fokus ke satu titik untuk mengisi kembali volume Anda." },
+    { icon: "◎", title: "Step 1: Isi Bengong", body: "Isi volume hingga 100% dengan fokus tenang pada satu titik." },
+    { icon: "⚡", title: "Step 2-5: The Bumps", body: "Lakukan Bump 1 hingga 4 secara berurutan. Setiap Bump mengambil durasi 25% dari waktu bengong Anda." },
+    { icon: "🌊", title: "Step 6: Balik Bengong", body: "Setelah semua Bump selesai, kembali isi volume hingga 100% untuk mengunci hasil latihan." },
+    { icon: "🌸", title: "Kunci Utama", body: "Selesaikan 6 tahap protokol secara disiplin tanpa terburu-buru." },
   ];
   return (
     <div style={{ position:"fixed",inset:0,background:"#000000cc",zIndex:100,display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}>
       <div style={{ background:"#0f172a",border:`1px solid ${accentColor}44`,borderRadius:20,maxWidth:600,width:"100%",maxHeight:"90vh",overflowY:"auto",padding:"32px 24px", boxShadow: "0 0 40px rgba(0,0,0,0.5)" }}>
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18 }}>
           <div>
-            <div style={{ fontSize:15,letterSpacing:4,color:accentColor,textTransform:"uppercase" }}>Panduan Lengkap</div>
-            <div style={{ fontSize:24,color:"#ffffff",fontFamily:"Georgia,serif",marginTop:2 }}>The Bump Method Protocol</div>
+            <div style={{ fontSize:15,letterSpacing:4,color:accentColor,textTransform:"uppercase" }}>Panduan Protokol</div>
+            <div style={{ fontSize:24,color:"#ffffff",fontFamily:"Georgia,serif",marginTop:2 }}>The Bump - 6 Step Protocol</div>
           </div>
           <button onClick={onClose} style={{ background:"#1e293b",border:"1px solid #334155",borderRadius:8,color:"#ffffff",width:34,height:34,cursor:"pointer",fontSize:15 }}>✕</button>
         </div>
@@ -49,14 +48,14 @@ function Tutorial({ onClose, accentColor }: TutorialProps) {
             <div key={i} style={{ background:"#1e293b",borderRadius:10,padding:"14px",display:"flex",gap:10,alignItems:"flex-start",border:"1px solid #334155" }}>
               <div style={{ fontSize:16,minWidth:30,height:30,borderRadius:8,background:accentColor+"22",display:"flex",alignItems:"center",justifyContent:"center",color:accentColor }}>{s.icon}</div>
               <div>
-                <div style={{ fontSize:15,color:accentColor,fontWeight:"bold",marginBottom:2 }}>{i+1}. {s.title}</div>
+                <div style={{ fontSize:15,color:accentColor,fontWeight:"bold",marginBottom:2 }}>{s.title}</div>
                 <div style={{ fontSize:15,color:"#ffffff",lineHeight:1.6 }}>{s.body}</div>
               </div>
             </div>
           ))}
         </div>
         <button onClick={onClose} style={{ marginTop:24,width:"100%",padding:"14px",borderRadius:12,background:`linear-gradient(135deg,${accentColor},${accentColor}88)`,border:"none",color:"#fff",fontSize:15,fontWeight:"bold",cursor:"pointer",letterSpacing:1 }}>
-          Saya Mengerti & Siap Berlatih →
+          Saya Mengerti & Mulai Berlatih →
         </button>
       </div>
     </div>
@@ -69,9 +68,12 @@ export default function TheBump() {
   const [volume, setVolume] = useState(0);
   const [running, setRunning] = useState(false);
   const [elapsed, setElapsed] = useState(0);
+  
+  // Protocol Progress (1-6)
+  const [protocolStep, setProtocolStep] = useState(1);
   const [isBumping, setIsBumping] = useState(false);
   const [bumpElapsed, setBumpElapsed] = useState(0);
-  const [activeBumpIdx, setActiveBumpIdx] = useState<number | null>(null);
+  
   const [bumpDone, setBumpDone] = useState([false,false,false,false]);
   const [rings, setRings] = useState<any[]>([]);
   const [showTutorial, setShowTutorial] = useState(true);
@@ -97,47 +99,61 @@ export default function TheBump() {
   const diff = DIFFICULTIES.find(d => d.id === diffId) || DIFFICULTIES[0];
   const bumpDurationSec = diff.bengongSec * 0.25;
   const isVolumeFull = volume >= 100;
-  const nextBumpIndex = bumpDone.indexOf(false);
 
-  // Timer: Bengong Phase
+  // Timer: Bengong Phase (Step 1 & Step 6)
   useEffect(() => {
     if (!running || isBumping || complete) return;
+    if (protocolStep !== 1 && protocolStep !== 6) return;
+
     const id = setInterval(() => {
       setElapsed(e => {
         const next = e + 1;
         const pct = Math.min(100, (next / diff.bengongSec) * 100);
         setVolume(pct);
-        if (pct >= 100) setRunning(false);
+        if (pct >= 100) {
+          setRunning(false);
+          if (protocolStep === 1) {
+            setProtocolStep(2); // Move to Bump Phase
+            showToast("Volume Penuh. Siap untuk Bump 1.");
+          } else if (protocolStep === 6) {
+            setTimeout(() => setComplete(true), 700);
+          }
+        }
         return next;
       });
     }, 1000);
     return () => clearInterval(id);
-  }, [running, isBumping, diff, complete]);
+  }, [running, isBumping, diff, complete, protocolStep]);
 
-  // Timer: Bump Phase
+  // Timer: Bump Phase (Step 2-5)
   useEffect(() => {
-    if (!isBumping || activeBumpIdx === null || complete) return;
+    if (!isBumping || complete) return;
+    if (protocolStep < 2 || protocolStep > 5) return;
+
     const id = setInterval(() => {
       setBumpElapsed(prev => {
         const next = prev + 1;
-        // Calculate volume draining or just showing progress
         const remainingPct = 100 - (next / bumpDurationSec) * 100;
         setVolume(Math.max(0, remainingPct));
 
         if (next >= bumpDurationSec) {
           setIsBumping(false);
           setBumpElapsed(0);
+          
+          const bumpIndex = protocolStep - 2;
           const newDone = [...bumpDone];
-          newDone[activeBumpIdx] = true;
+          newDone[bumpIndex] = true;
           setBumpDone(newDone);
-          setActiveBumpIdx(null);
-          setVolume(0);
+          
+          const nextStep = protocolStep + 1;
+          setProtocolStep(nextStep);
+          setVolume(nextStep === 6 ? 0 : 100); // Step 6 starts at 0, others stay at 100 for next bump click
           setElapsed(0);
           
-          if (newDone.every(Boolean)) {
-            setTimeout(() => setComplete(true), 700);
+          if (nextStep === 6) {
+            showToast("Semua Bump Selesai. Balik Bengong (Fokus 1 Titik).");
           } else {
-            showToast(`Bump Selesai. Kembali Fokus 1 Titik untuk isi Volume.`);
+            showToast(`Bump ${bumpIndex + 1} Selesai. Lanjut ke Bump ${bumpIndex + 2}.`);
           }
           return 0;
         }
@@ -145,7 +161,7 @@ export default function TheBump() {
       });
     }, 1000);
     return () => clearInterval(id);
-  }, [isBumping, activeBumpIdx, bumpDurationSec, bumpDone, complete]);
+  }, [isBumping, bumpDurationSec, bumpDone, complete, protocolStep]);
 
   // Pulse
   useEffect(() => {
@@ -170,22 +186,29 @@ export default function TheBump() {
 
   const handleBump = (i: number) => {
     if (bumpDone[i] || isBumping) return;
-    if (i !== nextBumpIndex) {
-      showToast(`Selesaikan Bump ${nextBumpIndex + 1} terlebih dahulu`);
+    
+    // Check if it's the correct sequential bump
+    if (protocolStep !== (i + 2)) {
+      if (protocolStep === 1) {
+        showToast("Isi Bengong (Volume 100%) terlebih dahulu");
+      } else {
+        showToast(`Sekarang adalah tahap Bump ${protocolStep - 1}`);
+      }
       return;
     }
+
     if (!isVolumeFull) {
       showToast("Volume Fokus kamu belum cukup untuk Bump (Wajib 100%)");
       return;
     }
     
     setIsBumping(true);
-    setActiveBumpIdx(i);
     spawnRing(BUMPS[i].color);
   };
 
   const resetSession = () => {
-    setVolume(0); setElapsed(0); setRunning(false); setIsBumping(false); setBumpElapsed(0);
+    setVolume(0); setElapsed(0); setRunning(false); 
+    setIsBumping(false); setBumpElapsed(0); setProtocolStep(1);
     setBumpDone([false,false,false,false]); setComplete(false); setRings([]);
   };
 
@@ -199,32 +222,58 @@ export default function TheBump() {
       type="button"
       onClick={(e) => {
         e.preventDefault();
+        e.stopPropagation();
         if (screen === "session") {
-          resetSession();
-          setScreen("select");
+          if (protocolStep > 1) {
+            // Logic to go back to previous step
+            const prevStep = protocolStep - 1;
+            setProtocolStep(prevStep);
+            setIsBumping(false);
+            setBumpElapsed(0);
+            setRunning(false);
+            
+            if (prevStep === 1) {
+              setVolume(0);
+              setElapsed(0);
+              setBumpDone([false, false, false, false]);
+            } else {
+              // If going back to a bump step (2,3,4,5)
+              setVolume(100);
+              const newDone = [...bumpDone];
+              // Reset the done status for the steps we are moving back to
+              for (let i = prevStep - 2; i < 4; i++) {
+                if (i >= 0) newDone[i] = false;
+              }
+              setBumpDone(newDone);
+            }
+            showToast(`Kembali ke Tahap ${prevStep}`);
+          } else {
+            resetSession();
+            setScreen("select");
+          }
         } else {
           window.location.href = "https://elvisiongroup.com";
         }
       }} 
       style={{ 
         position: isDesktop ? "fixed" : "absolute", top: 24, left: 24, 
-        background: "rgba(239, 68, 68, 0.6)", color: "white", 
-        border: "2px solid rgba(255, 255, 255, 0.2)", borderRadius: 8, 
-        width: 48, height: 48, display: "flex", alignItems: "center", justifyContent: "center",
-        cursor: "pointer", zIndex: 110,
+        background: "rgba(239, 68, 68, 0.8)", color: "white", 
+        border: "2px solid #ffffff", borderRadius: 8, 
+        width: 54, height: 54, display: "flex", alignItems: "center", justifyContent: "center",
+        cursor: "pointer", zIndex: 999,
         transition: "all 0.3s",
-        boxShadow: "0 4px 15px rgba(0,0,0,0.3)"
+        boxShadow: "0 6px 20px rgba(0,0,0,0.4)"
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.background = "rgba(239, 68, 68, 0.9)";
+        e.currentTarget.style.background = "#ef4444";
         e.currentTarget.style.transform = "scale(1.1)";
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.background = "rgba(239, 68, 68, 0.6)";
+        e.currentTarget.style.background = "rgba(239, 68, 68, 0.8)";
         e.currentTarget.style.transform = "scale(1)";
       }}
     >
-       <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="square" strokeLinejoin="miter">
+       <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="square" strokeLinejoin="miter">
          <path d="M15 18l-6-6 6-6"/>
        </svg>
     </button>
@@ -329,7 +378,7 @@ color:"#ffffff",position:"relative",overflowX:"hidden" }}>
         <div style={{ position:"fixed",inset:0,background:"#000000bb",zIndex:50,display:"flex",alignItems:"center",justifyContent:"center" }}>
           <div style={{ background:"#0f172a",border:`1px solid ${diff.color}44`,borderRadius:20,padding:"30px 26px",textAlign:"center",maxWidth:320 }}>
             <div style={{ fontSize:46,marginBottom:10 }}>🌸</div>
-            <div style={{ fontSize:15,color:diff.color,letterSpacing:3,textTransform:"uppercase",marginBottom:6 }}>Semua Bump Selesai</div>
+            <div style={{ fontSize:15,color:diff.color,letterSpacing:3,textTransform:"uppercase",marginBottom:6 }}>Protokol Selesai</div>
             <div style={{ fontSize:19,color:"#ffffff",fontFamily:"Georgia,serif",marginBottom:10 }}>Misi Fokus Berhasil</div>
             <div style={{ fontSize:15,color:"#ffffff",lineHeight:1.7,marginBottom:18 }}>
               Sistem telah ter-install di bawah sadar.<br/>
@@ -388,24 +437,24 @@ color:"#ffffff",position:"relative",overflowX:"hidden" }}>
                 </radialGradient>
               </defs>
               <circle cx={cx} cy={cy} r={r} fill="none" stroke="#1e293b" strokeWidth={10} />
-              <circle cx={cx} cy={cy} r={r} fill="none" stroke={isBumping ? BUMPS[activeBumpIdx || 0].color : diff.color} strokeWidth={10}
+              <circle cx={cx} cy={cy} r={r} fill="none" stroke={isBumping ? BUMPS[protocolStep - 2]?.color || diff.color : diff.color} strokeWidth={10}
                 strokeDasharray={`${dash} ${circ}`} strokeLinecap="round"
                 transform={`rotate(-90 ${cx} ${cy})`}
-                style={{ transition:"stroke 0.8s",filter:`drop-shadow(0 0 ${isBumping ? 25 : Math.floor(volume/100*22)}px ${isBumping ? BUMPS[activeBumpIdx || 0].color : diff.accent})` }}
+                style={{ transition:"stroke 0.8s",filter:`drop-shadow(0 0 ${isBumping ? 25 : Math.floor(volume/100*22)}px ${isBumping ? BUMPS[protocolStep - 2]?.color || diff.accent : diff.accent})` }}
               />
               <circle cx={cx} cy={cy} r={78*(volume/100)+8} fill="url(#og2)"
                 transform={`scale(${pulseScale}) translate(${cx*(1-pulseScale)},${cy*(1-pulseScale)})`}
               />
             </svg>
             <div style={{ position:"absolute",top:"50%",left:"50%",transform:`translate(-50%,-50%) scale(${pulseScale})`,textAlign:"center" }}>
-              <div style={{ fontSize:50,fontWeight:300,color:isBumping ? BUMPS[activeBumpIdx || 0].color : diff.color,lineHeight:1,letterSpacing:-2,transition:"color 0.8s" }}>
+              <div style={{ fontSize:50,fontWeight:300,color:isBumping ? BUMPS[protocolStep - 2]?.color || diff.color : diff.color,lineHeight:1,letterSpacing:-2,transition:"color 0.8s" }}>
                 {Math.floor(volume)}<span style={{ fontSize:16,color:"#ffffff" }}>%</span>
               </div>
-              <div style={{ fontSize:15,color:isBumping ? BUMPS[activeBumpIdx || 0].accent : diff.accent,letterSpacing:3,textTransform:"uppercase",marginTop:2 }}>
-                {isBumping ? "Bumping..." : "Volume"}
+              <div style={{ fontSize:15,color:isBumping ? BUMPS[protocolStep - 2]?.accent || diff.accent : diff.accent,letterSpacing:3,textTransform:"uppercase",marginTop:2 }}>
+                {isBumping ? "Bumping..." : protocolStep === 6 ? "Penyelesaian" : "Volume"}
               </div>
               <div style={{ fontSize:15,color:"#ffffff",marginTop:3 }}>
-                {isBumping ? `sisa ${fmt(Math.max(0, bumpDurationSec - bumpElapsed))}` : running ? `sisa ${fmt(Math.max(0,diff.bengongSec-elapsed))}` : volume>=100?"Siap Bump!":"paused"}
+                {isBumping ? `sisa ${fmt(Math.max(0, bumpDurationSec - bumpElapsed))}` : running ? `sisa ${fmt(Math.max(0,diff.bengongSec-elapsed))}` : volume>=100 ? (protocolStep === 6 ? "Hampir Selesai!" : "Siap Bump!") : "paused"}
               </div>
             </div>
           </div>
@@ -413,7 +462,7 @@ color:"#ffffff",position:"relative",overflowX:"hidden" }}>
           <div style={{ marginTop:8,zIndex:1,display:"flex",gap:16,alignItems:"center", marginBottom: isDesktop ? 0 : 24 }}>
             {[
               { label:"Bengong", val:fmt(elapsed) },
-              { label:"Bump", val:isBumping ? fmt(bumpElapsed) : "0s" },
+              { label:"Protocol", val:isBumping ? "Bumping" : `Step ${protocolStep}/6` },
               { label:"Status", val:`${bumpDone.filter(Boolean).length}/4` },
             ].map((s,i) => (
               <div key={i} style={{ display:"flex",alignItems:"center",gap:16 }}>
@@ -446,14 +495,14 @@ color:"#ffffff",position:"relative",overflowX:"hidden" }}>
           </div>
 
           <div style={{ display:"flex",gap:8,zIndex:1,marginBottom:32,flexWrap:"wrap",justifyContent: isDesktop ? "flex-start" : "center" }}>
-            <button onClick={()=>setRunning(r=>!r)} disabled={isBumping} style={{
+            <button onClick={()=>setRunning(r=>!r)} disabled={isBumping || (isVolumeFull && protocolStep >= 2 && protocolStep <= 5)} style={{
               padding:"11px 22px",borderRadius:12,
               background:running?"#1e293b":isBumping?"#0c1422":`linear-gradient(135deg,${diff.accent},${diff.color}88)`,
               border:`1px solid ${running?"#334155":diff.accent}`,
               color:running?"#94a3b8":"#fff",fontSize:15,fontWeight:"bold",
-              cursor:isBumping?"not-allowed":"pointer",letterSpacing:1,transition:"all 0.3s",
+              cursor:(isBumping || (isVolumeFull && protocolStep >= 2 && protocolStep <= 5)) ?"not-allowed":"pointer",letterSpacing:1,transition:"all 0.3s",
             }}>
-              {running?"⏸ Pause":isVolumeFull?"Wajib Bump":"◎ Mulai Bengong"}
+              {running?"⏸ Pause":isVolumeFull && protocolStep <= 5 ?"Wajib Bump": protocolStep === 6 ? "◎ Balik Bengong" : "◎ Mulai Bengong"}
             </button>
             <button onClick={resetSession} style={{ padding:"11px 13px",borderRadius:12,background:"transparent",border:"1px solid #1e293b",color:"#ffffff",cursor:"pointer",fontSize:15 }}>↺</button>
             <button onClick={()=>{ resetSession(); setScreen("select"); }} style={{ padding:"11px 13px",borderRadius:12,background:"transparent",border:"1px solid #1e293b",color:"#ffffff",cursor:"pointer",fontSize:15 }}>⟵</button>
@@ -461,19 +510,19 @@ color:"#ffffff",position:"relative",overflowX:"hidden" }}>
 
           <div style={{ zIndex:1,width:"100%" }}>
             <div style={{ fontSize:15,color:"#ffffff",letterSpacing:3,textTransform:"uppercase",textAlign: isDesktop ? "left" : "center", marginBottom:12 }}>
-              ⚡ PROTOKOL BUMP — Wajib 100% Vol
+              ⚡ PROTOKOL BUMP — Step {protocolStep}/6
             </div>
-            <div style={{ display:"grid", gridTemplateColumns: isDesktop ? "1fr 1fr" : "1fr 1fr", gap: isDesktop ? 14 : 12, width: "100%" }}>
+            <div style={{ display:"grid", gridTemplateColumns: isDesktop ? "1fr 1fr" : "1fr 1fr", gap: 14, width: "100%" }}>
               {BUMPS.map((b,i) => {
                 const done = bumpDone[i];
-                const active = activeBumpIdx === i;
-                const isNext = i === nextBumpIndex;
+                const active = isBumping && (protocolStep === i + 2);
+                const isNext = protocolStep === (i + 2);
                 const canClick = isVolumeFull && isNext && !isBumping;
                 
                 return (
                   <button key={b.id} onClick={()=>handleBump(i)} style={{
                     padding: isDesktop ? "20px 16px" : "12px 10px",
-                    borderRadius:12,cursor: done || isBumping ? "default" : isNext ? "pointer" : "not-allowed",
+                    borderRadius:12,cursor: done || isBumping || !isNext ? "default" : "pointer",
                     background:done?"#0f172a":active?b.color+"44":canClick?b.color+"33":"#0c1422",
                     border:`1.5px solid ${done?"#1e293b":active?b.color:canClick?b.color:"#ffffff"}`,
                     textAlign:"left",transition:"all 0.3s",
@@ -484,8 +533,8 @@ color:"#ffffff",position:"relative",overflowX:"hidden" }}>
                   }}>
                     {done&&<div style={{ position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",background:"#0f172acc",fontSize:20,color:"#4ade80" }}>✓</div>}
                     <div style={{ fontSize: isDesktop ? 22 : 15,marginBottom:2,color:done?"#334155":b.color }}>{b.emoji}</div>
-                    <div style={{ fontSize: isDesktop ? 12 : 10,color:done?"#334155":b.color,fontWeight:"bold",lineHeight:1.3 }}>{b.label}</div>
-                    <div style={{ fontSize: isDesktop ? 11 : 9,color:done?"#1e293b":"#64748b",marginTop:1 }}>{b.sub}</div>
+                    <div style={{ fontSize: isDesktop ? 15 : 15,color:done?"#334155":b.color,fontWeight:"bold",lineHeight:1.3 }}>{b.label}</div>
+                    <div style={{ fontSize: isDesktop ? 15 : 15,color:done?"#1e293b":"#64748b",marginTop:1 }}>{b.sub}</div>
                     
                     {canClick && (
                       <div style={{ marginTop: 8, fontSize: 15, color: b.color, fontWeight: "bold", textTransform: "uppercase", letterSpacing: 0.5, animation: "flash 1s infinite" }}>
@@ -501,9 +550,14 @@ color:"#ffffff",position:"relative",overflowX:"hidden" }}>
                 );
               })}
             </div>
-            {!isVolumeFull && !complete && (
+            {protocolStep === 1 && !isVolumeFull && (
               <div style={{ textAlign: "center", marginTop:16, fontSize:15, color:diff.color, fontStyle:"italic" }}>
-                 Fokus 1 Titik hingga Volume 100%...
+                 Tahap 1: Fokus 1 Titik hingga Volume 100%...
+              </div>
+            )}
+            {protocolStep === 6 && !isVolumeFull && (
+              <div style={{ textAlign: "center", marginTop:16, fontSize:15, color:diff.color, fontStyle:"italic" }}>
+                 Tahap 6: Balik Bengong. Fokus 1 Titik hingga Volume 100%...
               </div>
             )}
           </div>
