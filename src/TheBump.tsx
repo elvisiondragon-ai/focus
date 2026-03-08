@@ -14,6 +14,15 @@ const BUMPS = [
   { id: 3, label: "Bump Keinginan",  sub: "Deep Relax",   emoji: "❋", color: "#c4b5fd", accent: "#8b5cf6" },
 ];
 
+const FOCUS_BUBBLES = [
+  { atPct: 1,  text: "Fokuskan ke titik ini saja..." },
+  { atPct: 10, text: "Abaikan pikiran lain, tidak ada keharusan — hanya fokus ke titik ini saja" },
+  { atPct: 25, text: "Biarkan pikiran lewat, kamu tidak perlu mengikutinya" },
+  { atPct: 50, text: "Tarik semua perhatian kembali ke sini" },
+  { atPct: 75, text: "Semakin dalam, semakin jernih — tetap di sini" },
+  { atPct: 99, text: "Volume hampir penuh — pertahankan..." },
+];
+
 function fmt(sec: number) {
   const s = Math.floor(sec);
   const m = Math.floor(s / 60);
@@ -34,7 +43,7 @@ function Tutorial({ onClose, accentColor }: TutorialProps) {
     { icon: "🌸", title: "Kunci Utama", body: "Selesaikan 6 tahap protokol secara disiplin tanpa terburu-buru." },
   ];
   return (
-    <div style={{ position:"fixed",inset:0,background:"#000000cc",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}>
+    <div style={{ position:"fixed",inset:0,background:"#000000cc",zIndex:2000,display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}>
       <div style={{ background:"#0f172a",border:`1px solid ${accentColor}44`,borderRadius:20,maxWidth:600,width:"100%",maxHeight:"90vh",overflowY:"auto",padding:"32px 24px", boxShadow: "0 0 40px rgba(0,0,0,0.5)" }}>
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18 }}>
           <div>
@@ -82,6 +91,10 @@ export default function TheBump() {
   const [complete, setComplete] = useState(false);
   const [pulseT, setPulseT] = useState(0);
   const [toast, setToast] = useState<string | null>(null);
+  
+  const [activeBubble, setActiveBubble] = useState<string | null>(null);
+  const bubbleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const [isDesktop, setIsDesktop] = useState(window.innerWidth > 1024);
   const ringId = useRef(0);
 
@@ -110,6 +123,17 @@ export default function TheBump() {
         const next = e + 1;
         const pct = Math.min(100, (next / diff.focusSec) * 100);
         setVolume(pct);
+
+        // ── BUBBLE TRIGGER ──────────────────────────────
+        const floorPct = Math.floor(pct);
+        const match = FOCUS_BUBBLES.find(b => b.atPct === floorPct);
+        if (match) {
+          setActiveBubble(match.text);
+          if (bubbleTimerRef.current) clearTimeout(bubbleTimerRef.current);
+          bubbleTimerRef.current = setTimeout(() => setActiveBubble(null), 4000);
+        }
+        // ────────────────────────────────────────────────
+
         if (pct >= 100) {
           setRunning(false);
           if (protocolStep === 1) {
@@ -210,6 +234,7 @@ export default function TheBump() {
     setVolume(0); setElapsed(0); setRunning(false); 
     setIsBumping(false); setBumpElapsed(0); setProtocolStep(1);
     setBumpDone([false,false,false,false]); setComplete(false); setRings([]);
+    setActiveBubble(null);
   };
 
   const pulseScale = running || isBumping ? 1 + Math.sin(pulseT * 3) * 0.022 * (isBumping ? 1 : volume / 100) : 1;
@@ -231,6 +256,7 @@ export default function TheBump() {
           setVolume(0);
           setElapsed(0);
           setBumpDone([false, false, false, false]);
+          setActiveBubble(null);
         } else {
           setVolume(100);
           const newDone = [...bumpDone];
@@ -245,7 +271,7 @@ export default function TheBump() {
         setScreen("select");
       }
     } else {
-      window.location.href = "https://elvisiongroup.com";
+      window.location.href = "https://focus.elvisiongroup.com";
     }
   }
 
@@ -283,7 +309,7 @@ export default function TheBump() {
   );
 
   const Toast = () => toast ? (
-    <div style={{ position: "fixed", bottom: 40, left: "50%", transform: "translateX(-50%)", background: "rgba(0,0,0,0.8)", border: `1px solid ${diff.color}`, color: "white", padding: "12px 24px", borderRadius: 12, fontSize: 15, zIndex: 2000, textAlign: "center", boxShadow: "0 10px 30px rgba(0,0,0,0.5)", pointerEvents: "none", animation: "fadeIn 0.3s" }}>
+    <div style={{ position: "fixed", bottom: 40, left: "50%", transform: "translateX(-50%)", background: "rgba(0,0,0,0.8)", border: `1px solid ${diff.color}`, color: "white", padding: "12px 24px", borderRadius: 12, fontSize: 15, zIndex: 3000, textAlign: "center", boxShadow: "0 10px 30px rgba(0,0,0,0.5)", pointerEvents: "none", animation: "fadeIn 0.3s" }}>
       {toast}
     </div>
   ) : null;
@@ -381,7 +407,7 @@ color:"#ffffff",position:"relative",overflowX:"hidden" }}>
 
       {/* COMPLETE OVERLAY */}
       {complete && (
-        <div style={{ position:"fixed",inset:0,background:"#000000bb",zIndex:1500,display:"flex",alignItems:"center",justifyContent:"center" }}>
+        <div style={{ position:"fixed",inset:0,background:"#000000bb",zIndex:4000,display:"flex",alignItems:"center",justifyContent:"center" }}>
           <div style={{ background:"#0f172a",border:`1px solid ${diff.color}44`,borderRadius:20,padding:"30px 26px",textAlign:"center",maxWidth:320 }}>
             <div style={{ fontSize:46,marginBottom:10 }}>🌸</div>
             <div style={{ fontSize:15,color:diff.color,letterSpacing:3,textTransform:"uppercase",marginBottom:6 }}>Protokol Selesai</div>
@@ -452,6 +478,50 @@ color:"#ffffff",position:"relative",overflowX:"hidden" }}>
                 transform={`scale(${pulseScale}) translate(${cx*(1-pulseScale)},${cy*(1-pulseScale)})`}
               />
             </svg>
+
+            {/* FOCUS BUBBLE */}
+            {activeBubble && !isBumping && (
+              <div style={{
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -175px)",
+                background: "rgba(15, 23, 42, 0.92)",
+                border: `1px solid ${diff.color}66`,
+                borderRadius: 12,
+                padding: "10px 14px",
+                maxWidth: 220,
+                textAlign: "center",
+                pointerEvents: "none",
+                zIndex: 10,
+                animation: "bubbleFadeIn 0.4s ease",
+                boxShadow: `0 0 20px ${diff.color}22`,
+              }}>
+                <div style={{
+                  fontSize: 15,
+                  color: diff.color,
+                  lineHeight: 1.6,
+                  fontStyle: "italic",
+                  fontFamily: "Georgia, serif",
+                }}>
+                  "{activeBubble}"
+                </div>
+                {/* Arrow bawah */}
+                <div style={{
+                  position: "absolute",
+                  bottom: -7,
+                  left: "50%",
+                  transform: "translateX(-50%) rotate(45deg)",
+                  width: 12,
+                  height: 12,
+                  background: "rgba(15, 23, 42, 0.92)",
+                  border: `1px solid ${diff.color}66`,
+                  borderTop: "none",
+                  borderLeft: "none",
+                }} />
+              </div>
+            )}
+
             <div style={{ position:"absolute",top:"50%",left:"50%",transform:`translate(-50%,-50%) scale(${pulseScale})`,textAlign:"center" }}>
               <div style={{ fontSize:50,fontWeight:300,color:isBumping ? BUMPS[protocolStep - 2]?.color || diff.color : diff.color,lineHeight:1,letterSpacing:-2,transition:"color 0.8s" }}>
                 {Math.floor(volume)}<span style={{ fontSize:16,color:"#ffffff" }}>%</span>
@@ -579,6 +649,10 @@ color:"#ffffff",position:"relative",overflowX:"hidden" }}>
           0% { opacity: 0.4; }
           50% { opacity: 1; }
           100% { opacity: 0.4; }
+        }
+        @keyframes bubbleFadeIn {
+          from { opacity: 0; transform: translate(-50%, -165px); }
+          to   { opacity: 1; transform: translate(-50%, -175px); }
         }
       `}</style>
     </div>

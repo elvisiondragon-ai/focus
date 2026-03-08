@@ -2,7 +2,7 @@
 
 Application for Focus Concentration Method.
 
-Domain: [focus.elvisiongroup.com](https://focus.elvisiongroup.com)
+Domain: [focus.focus.elvisiongroup.com](https://focus.focus.elvisiongroup.com)
 
 ## Getting Started
 
