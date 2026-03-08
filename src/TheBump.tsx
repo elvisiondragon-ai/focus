@@ -34,7 +34,7 @@ function Tutorial({ onClose, accentColor }: TutorialProps) {
     { icon: "🌸", title: "Kunci Utama", body: "Selesaikan 6 tahap protokol secara disiplin tanpa terburu-buru." },
   ];
   return (
-    <div style={{ position:"fixed",inset:0,background:"#000000cc",zIndex:100,display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}>
+    <div style={{ position:"fixed",inset:0,background:"#000000cc",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}>
       <div style={{ background:"#0f172a",border:`1px solid ${accentColor}44`,borderRadius:20,maxWidth:600,width:"100%",maxHeight:"90vh",overflowY:"auto",padding:"32px 24px", boxShadow: "0 0 40px rgba(0,0,0,0.5)" }}>
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18 }}>
           <div>
@@ -76,7 +76,7 @@ export default function TheBump() {
   
   const [bumpDone, setBumpDone] = useState([false,false,false,false]);
   const [rings, setRings] = useState<any[]>([]);
-  const [showTutorial, setShowTutorial] = useState(true);
+  const [showTutorial, setShowTutorial] = useState(false);
   const [desire, setDesire] = useState("Contoh: Bisnis tembus 100 juta");
   const [editingDesire, setEditingDesire] = useState(false);
   const [complete, setComplete] = useState(false);
@@ -218,6 +218,7 @@ export default function TheBump() {
   const dash = circ * (volume / 100);
 
   function HandleKembali() {
+    console.log("HandleKembali triggered - screen:", screen, "step:", protocolStep);
     if (screen === "session") {
       if (protocolStep > 1) {
         const prevStep = protocolStep - 1;
@@ -248,9 +249,10 @@ export default function TheBump() {
     }
   }
 
-  const KembaliBtn = () => (
+  const renderBackBtn = () => (
     <button 
       type="button"
+      id="back-button-top"
       onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -258,10 +260,10 @@ export default function TheBump() {
       }} 
       style={{ 
         position: isDesktop ? "fixed" : "absolute", top: 24, left: 24, 
-        background: "rgba(239, 68, 68, 0.8)", color: "white", 
+        background: "rgba(239, 68, 68, 0.9)", color: "white", 
         border: "2px solid #ffffff", borderRadius: 8, 
         width: 54, height: 54, display: "flex", alignItems: "center", justifyContent: "center",
-        cursor: "pointer", zIndex: 999,
+        cursor: "pointer", zIndex: 1100,
         transition: "all 0.3s",
         boxShadow: "0 6px 20px rgba(0,0,0,0.4)"
       }}
@@ -270,18 +272,18 @@ export default function TheBump() {
         e.currentTarget.style.transform = "scale(1.1)";
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.background = "rgba(239, 68, 68, 0.8)";
+        e.currentTarget.style.background = "rgba(239, 68, 68, 0.9)";
         e.currentTarget.style.transform = "scale(1)";
       }}
     >
-       <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="square" strokeLinejoin="miter">
+       <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="square" strokeLinejoin="miter" style={{ pointerEvents: "none" }}>
          <path d="M15 18l-6-6 6-6"/>
        </svg>
     </button>
   );
 
   const Toast = () => toast ? (
-    <div style={{ position: "fixed", bottom: 40, left: "50%", transform: "translateX(-50%)", background: "rgba(0,0,0,0.8)", border: `1px solid ${diff.color}`, color: "white", padding: "12px 24px", borderRadius: 12, fontSize: 15, zIndex: 200, textAlign: "center", boxShadow: "0 10px 30px rgba(0,0,0,0.5)", pointerEvents: "none", animation: "fadeIn 0.3s" }}>
+    <div style={{ position: "fixed", bottom: 40, left: "50%", transform: "translateX(-50%)", background: "rgba(0,0,0,0.8)", border: `1px solid ${diff.color}`, color: "white", padding: "12px 24px", borderRadius: 12, fontSize: 15, zIndex: 2000, textAlign: "center", boxShadow: "0 10px 30px rgba(0,0,0,0.5)", pointerEvents: "none", animation: "fadeIn 0.3s" }}>
       {toast}
     </div>
   ) : null;
@@ -291,7 +293,7 @@ export default function TheBump() {
     const selDiff = DIFFICULTIES.find(d => d.id === diffId);
     return (
       <div style={{ minHeight:"100vh", width: "100%", background:"radial-gradient(ellipse at 50% 0%,#0c1445 0%,#020617 70%)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"32px 16px",fontFamily:"Georgia,'Times New Roman',serif",color:"#ffffff", position: "relative" }}>
-        <KembaliBtn />
+        {renderBackBtn()}
         {showTutorial && <Tutorial onClose={() => setShowTutorial(false)} accentColor="#7dd3fc" />}
 
         <div style={{ textAlign:"center",marginBottom:20 }}>
@@ -333,7 +335,7 @@ export default function TheBump() {
               <div style={{ fontSize:22,marginBottom:6 }}>{d.icon}</div>
               <div style={{ fontSize:15,color:diffId===d.id?d.color:"#ffffff",fontWeight:"bold",fontFamily:"Georgia,serif" }}>{d.label}</div>
               <div style={{ fontSize:15,color:"#ffffff",marginTop:3 }}>{d.desc}</div>
-              <div style={{ fontSize:15,color:diffId===d.id?d.color+"99":"#334155",marginTop:6 }}>Bump Durasi = {fmt(d.focusSec*0.25)}</div>
+              <div style={{ fontSize:15,color:diffId===d.id?d.color+"99":"#ffffff",marginTop:6 }}>Bump Durasi = {fmt(d.focusSec*0.25)}</div>
             </button>
           ))}
         </div>
@@ -343,7 +345,7 @@ export default function TheBump() {
             padding:"13px 40px",borderRadius:12,
             background: diffId ? `linear-gradient(135deg,${selDiff?.accent},${selDiff?.color}88)` : "#1e293b",
             border:`1px solid ${diffId ? selDiff?.color : "#334155"}`,
-            color:diffId?"#fff":"#475569",fontSize:15,fontWeight:"bold",
+            color:diffId?"#fff":"#ffffff",fontSize:15,fontWeight:"bold",
             cursor:diffId?"pointer":"not-allowed",letterSpacing:1,transition:"all 0.4s",
           }}>Mulai Sesi →</button>
         </div>
@@ -370,13 +372,16 @@ export default function TheBump() {
       padding: isDesktop ? "48px 80px" : "18px 16px 48px",
       fontFamily:"Georgia,'Times New Roman',serif",
 color:"#ffffff",position:"relative",overflowX:"hidden" }}>
-      <KembaliBtn />
+      {renderBackBtn()}
       <Toast />
       {showTutorial && <Tutorial onClose={() => setShowTutorial(false)} accentColor={diff.color} />}
 
+      {/* Ambient Glow */}
+      <div style={{ position:"fixed",top:"12%",left:"50%",transform:"translateX(-50%)",width:480,height:480,borderRadius:"50%",background:`radial-gradient(circle,${diff.accent}14 0%,transparent 70%)`,pointerEvents:"none",transition:"background 1.2s", zIndex: 0 }} />
+
       {/* COMPLETE OVERLAY */}
       {complete && (
-        <div style={{ position:"fixed",inset:0,background:"#000000bb",zIndex:50,display:"flex",alignItems:"center",justifyContent:"center" }}>
+        <div style={{ position:"fixed",inset:0,background:"#000000bb",zIndex:1500,display:"flex",alignItems:"center",justifyContent:"center" }}>
           <div style={{ background:"#0f172a",border:`1px solid ${diff.color}44`,borderRadius:20,padding:"30px 26px",textAlign:"center",maxWidth:320 }}>
             <div style={{ fontSize:46,marginBottom:10 }}>🌸</div>
             <div style={{ fontSize:15,color:diff.color,letterSpacing:3,textTransform:"uppercase",marginBottom:6 }}>Protokol Selesai</div>
