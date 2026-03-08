@@ -7,8 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Lock, Eye, EyeOff, Sparkles, Zap, MessageCircle } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, Sparkles, MessageCircle } from "lucide-react";
 import { iOSCacheCleaner } from "@/utils/iOSCacheCleaner";
+import logo from "@/focus.png";
 
 export function Auth() {
     const navigate = useNavigate();
@@ -166,7 +167,7 @@ export function Auth() {
             <div className="min-h-screen bg-[#0F0F23] flex items-center justify-center p-4 text-white">
                 <div className="w-full max-w-md">
                     <div className="text-center mb-8">
-                        <Zap className="w-12 h-12 mx-auto text-blue-500 mb-2" />
+                        <img src={logo} alt="eL Focus" className="w-16 h-16 mx-auto mb-2 drop-shadow-[0_0_15px_rgba(59,130,246,0.5)] rounded-2xl" />
                         <h1 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">eL Focus</h1>
                     </div>
                     <Card className="p-6 bg-gradient-secondary border-border">
@@ -203,7 +204,7 @@ export function Auth() {
         <div className="min-h-screen bg-[#0F0F23] flex items-center justify-center p-4 text-white">
             <div className="w-full max-w-md">
                 <div className="text-center mb-8">
-                    <Zap className="w-16 h-16 mx-auto text-blue-500 mb-2 glow-primary rounded-full p-2" />
+                    <img src={logo} alt="eL Focus" className="w-20 h-20 mx-auto mb-2 drop-shadow-[0_0_15px_rgba(59,130,246,0.5)] rounded-2xl" />
                     <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">eL Focus</h1>
                     <p className="text-muted-foreground mt-2">The Neuro-Protocol for Deep Focus</p>
                 </div>
@@ -235,7 +236,7 @@ export function Auth() {
                                     </div>
                                 </div>
                                 <Button type="submit" className="w-full bg-gradient-primary h-11 transform hover:scale-105 transition-all" disabled={isLoading}>
-                                    {isLoading ? "Login..." : "Login"} <Zap className="ml-2 h-4 w-4" />
+                                    {isLoading ? "Login..." : "Login"}
                                 </Button>
                             </form>
                             <div className="text-center text-sm">
