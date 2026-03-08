@@ -351,19 +351,19 @@ export default function TheBump() {
       }} 
       style={{ 
         position: isDesktop ? "fixed" : "absolute", top: 24, left: 24, 
-        background: "rgba(239, 68, 68, 0.9)", color: "white", 
+        background: "linear-gradient(135deg, #3b82f6, #2563eb)", color: "white", 
         border: "2px solid #ffffff", borderRadius: 8, 
         width: 54, height: 54, display: "flex", alignItems: "center", justifyContent: "center",
         cursor: "pointer", zIndex: 1100,
         transition: "all 0.3s",
-        boxShadow: "0 6px 20px rgba(0,0,0,0.4)"
+        boxShadow: "0 6px 20px rgba(59, 130, 246, 0.4)"
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.background = "#ef4444";
+        e.currentTarget.style.background = "linear-gradient(135deg, #60a5fa, #3b82f6)";
         e.currentTarget.style.transform = "scale(1.1)";
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.background = "rgba(239, 68, 68, 0.9)";
+        e.currentTarget.style.background = "linear-gradient(135deg, #3b82f6, #2563eb)";
         e.currentTarget.style.transform = "scale(1)";
       }}
     >
