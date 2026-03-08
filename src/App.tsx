@@ -14,22 +14,27 @@ const BUMPS = [
   { id: 3, label: "Bump Keinginan",  sub: "Deep Relax",   emoji: "❋", color: "#c4b5fd", accent: "#8b5cf6" },
 ];
 
-function fmt(sec) {
+function fmt(sec: number) {
   const s = Math.floor(sec);
   const m = Math.floor(s / 60);
   const ss = s % 60;
   return m > 0 ? `${m}m ${ss < 10 ? "0" : ""}${ss}s` : `${ss}s`;
 }
 
-function Tutorial({ onClose, accentColor }) {
+interface TutorialProps {
+  onClose: () => void;
+  accentColor: string;
+}
+
+function Tutorial({ onClose, accentColor }: TutorialProps) {
   const steps = [
     { icon: "◎", title: "Pilih Tingkat Kesulitan", body: "Easy (1 menit) hingga eL Zen (20 menit). Semakin lama bengong, semakin besar volume yang bisa ditampung dan semakin kuat efek bumpnya." },
     { icon: "🌊", title: "Mulai Bengong — Isi Volume", body: "Tekan MULAI BENGONG. Fokuskan perhatian ke satu titik — biarkan pikiran menetap tenang seperti air yang diam. Lingkaran akan terisi sesuai waktu. 90% waktumu adalah di sini." },
     { icon: "⚡", title: "Prinsip Volume", body: "Volume adalah mata uang. Setiap Bump menghabiskan 25% volume (setara 25% waktu bengong). Bump hanya efektif jika volume cukup. Jangan paksa jika kosong." },
-    { icon: "✦", title: "Bump 1 — Reality Deep Clarity", body: "Tanyakan dalam hati: "Apakah saya sudah bisa melihat realitas dengan sangat jelas sekarang?" — lalu lupakan, kembali ke bengong." },
-    { icon: "◈", title: "Bump 2 — Reality Deep Relax", body: ""Apakah saya sudah bisa pasrah total di realitas ini sekarang?" — ini membangun Deep Reality Set, patokan dari semua keinginan." },
-    { icon: "◉", title: "Bump 3 — Keinginan Deep Clarity", body: ""Apakah saya sudah bisa merasakan keinginan saya dengan sangat jelas sekarang?" — rasakan, lalu lepaskan kembali ke bengong." },
-    { icon: "❋", title: "Bump 4 — Keinginan Deep Relax", body: ""Apakah saya sudah bisa pasrah total pada keinginan ini sekarang?" — setelah ini, lupakan semua. Kembali bengong. System bekerja otomatis di bawah sadar." },
+    { icon: "✦", title: "Bump 1 — Reality Deep Clarity", body: "Tanyakan dalam hati: 'Apakah saya sudah bisa melihat realitas dengan sangat jelas sekarang?' — lalu lupakan, kembali ke bengong." },
+    { icon: "◈", title: "Bump 2 — Reality Deep Relax", body: "'Apakah saya sudah bisa pasrah total di realitas ini sekarang?' — ini membangun Deep Reality Set, patokan dari semua keinginan." },
+    { icon: "◉", title: "Bump 3 — Keinginan Deep Clarity", body: "'Apakah saya sudah bisa merasakan keinginan saya dengan sangat jelas sekarang?' — rasakan, lalu lepaskan kembali ke bengong." },
+    { icon: "❋", title: "Bump 4 — Keinginan Deep Relax", body: "'Apakah saya sudah bisa pasrah total pada keinginan ini sekarang?' — setelah ini, lupakan semua. Kembali bengong. System bekerja otomatis di bawah sadar." },
     { icon: "🌸", title: "Kunci Utama", body: "Jangan paksa bump jika volume kosong. Kembali bengong, isi dulu. Ritme ideal: 90% bengong, 10% bump. Volume adalah segalanya." },
   ];
   return (
@@ -66,13 +71,13 @@ function Tutorial({ onClose, accentColor }) {
 
 export default function TheBump() {
   const [screen, setScreen] = useState("select");
-  const [diffId, setDiffId] = useState(null);
+  const [diffId, setDiffId] = useState<string | null>(null);
   const [volume, setVolume] = useState(0);
   const [running, setRunning] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [bumpFlash, setBumpFlash] = useState([false,false,false,false]);
   const [bumpDone, setBumpDone] = useState([false,false,false,false]);
-  const [rings, setRings] = useState([]);
+  const [rings, setRings] = useState<any[]>([]);
   const [showTutorial, setShowTutorial] = useState(false);
   const [desire, setDesire] = useState("Keinginanku");
   const [editingDesire, setEditingDesire] = useState(false);
@@ -114,9 +119,9 @@ export default function TheBump() {
     return () => clearInterval(id);
   }, []);
 
-  const spawnRing = (color) => setRings(prev => [...prev, { id: ringId.current++, scale: 1, opacity: 0.75, color }]);
+  const spawnRing = (color: string) => setRings(prev => [...prev, { id: ringId.current++, scale: 1, opacity: 0.75, color }]);
 
-  const handleBump = (i) => {
+  const handleBump = (i: number) => {
     if (!canBump || bumpDone[i]) return;
     spawnRing(BUMPS[i].color);
     setBumpFlash(prev => { const n=[...prev]; n[i]=true; return n; });
