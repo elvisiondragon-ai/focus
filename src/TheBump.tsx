@@ -496,7 +496,7 @@ color:"#ffffff",position:"relative",overflowX:"hidden" }}>
 
           <div style={{ display:"flex",gap:8,zIndex:1,marginBottom:32,flexWrap:"wrap",justifyContent: isDesktop ? "flex-start" : "center" }}>
             <button onClick={()=>setRunning(r=>!r)} disabled={isBumping || (isVolumeFull && protocolStep >= 2 && protocolStep <= 5)} style={{
-              padding:"11px 22px",borderRadius:12,
+              padding:"11px 32px",borderRadius:12,
               background:running?"#1e293b":isBumping?"#0c1422":`linear-gradient(135deg,${diff.accent},${diff.color}88)`,
               border:`1px solid ${running?"#334155":diff.accent}`,
               color:running?"#94a3b8":"#fff",fontSize:15,fontWeight:"bold",
@@ -504,8 +504,6 @@ color:"#ffffff",position:"relative",overflowX:"hidden" }}>
             }}>
               {running?"⏸ Pause":isVolumeFull && protocolStep <= 5 ?"Wajib Bump": protocolStep === 6 ? "◎ Balik Bengong" : "◎ Mulai Bengong"}
             </button>
-            <button onClick={resetSession} style={{ padding:"11px 13px",borderRadius:12,background:"transparent",border:"1px solid #1e293b",color:"#ffffff",cursor:"pointer",fontSize:15 }}>↺</button>
-            <button onClick={()=>{ resetSession(); setScreen("select"); }} style={{ padding:"11px 13px",borderRadius:12,background:"transparent",border:"1px solid #1e293b",color:"#ffffff",cursor:"pointer",fontSize:15 }}>⟵</button>
           </div>
 
           <div style={{ zIndex:1,width:"100%" }}>
