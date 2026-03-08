@@ -217,43 +217,44 @@ export default function TheBump() {
   const circ = 2 * Math.PI * r;
   const dash = circ * (volume / 100);
 
+  function HandleKembali() {
+    if (screen === "session") {
+      if (protocolStep > 1) {
+        const prevStep = protocolStep - 1;
+        setProtocolStep(prevStep);
+        setIsBumping(false);
+        setBumpElapsed(0);
+        setRunning(false);
+        
+        if (prevStep === 1) {
+          setVolume(0);
+          setElapsed(0);
+          setBumpDone([false, false, false, false]);
+        } else {
+          setVolume(100);
+          const newDone = [...bumpDone];
+          for (let i = prevStep - 2; i < 4; i++) {
+            if (i >= 0) newDone[i] = false;
+          }
+          setBumpDone(newDone);
+        }
+        showToast(`Kembali ke Tahap ${prevStep}`);
+      } else {
+        resetSession();
+        setScreen("select");
+      }
+    } else {
+      window.location.href = "https://elvisiongroup.com";
+    }
+  }
+
   const KembaliBtn = () => (
     <button 
       type="button"
       onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();
-        if (screen === "session") {
-          if (protocolStep > 1) {
-            // Logic to go back to previous step
-            const prevStep = protocolStep - 1;
-            setProtocolStep(prevStep);
-            setIsBumping(false);
-            setBumpElapsed(0);
-            setRunning(false);
-            
-            if (prevStep === 1) {
-              setVolume(0);
-              setElapsed(0);
-              setBumpDone([false, false, false, false]);
-            } else {
-              // If going back to a bump step (2,3,4,5)
-              setVolume(100);
-              const newDone = [...bumpDone];
-              // Reset the done status for the steps we are moving back to
-              for (let i = prevStep - 2; i < 4; i++) {
-                if (i >= 0) newDone[i] = false;
-              }
-              setBumpDone(newDone);
-            }
-            showToast(`Kembali ke Tahap ${prevStep}`);
-          } else {
-            resetSession();
-            setScreen("select");
-          }
-        } else {
-          window.location.href = "https://elvisiongroup.com";
-        }
+        HandleKembali();
       }} 
       style={{ 
         position: isDesktop ? "fixed" : "absolute", top: 24, left: 24, 
