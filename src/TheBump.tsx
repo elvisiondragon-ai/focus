@@ -196,25 +196,37 @@ export default function TheBump() {
 
   const KembaliBtn = () => (
     <button 
-      onClick={() => window.location.href = "https://elvisiongroup.com"} 
+      type="button"
+      onClick={(e) => {
+        e.preventDefault();
+        if (screen === "session") {
+          resetSession();
+          setScreen("select");
+        } else {
+          window.location.href = "https://elvisiongroup.com";
+        }
+      }} 
       style={{ 
         position: isDesktop ? "fixed" : "absolute", top: 24, left: 24, 
-        background: "rgba(239, 68, 68, 0.4)", color: "white", 
-        border: "1px solid rgba(239, 68, 68, 0.3)", borderRadius: "50%", 
-        width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center",
-        fontSize: 18, cursor: "pointer", zIndex: 110,
-        transition: "all 0.3s"
+        background: "rgba(239, 68, 68, 0.6)", color: "white", 
+        border: "2px solid rgba(255, 255, 255, 0.2)", borderRadius: 8, 
+        width: 48, height: 48, display: "flex", alignItems: "center", justifyContent: "center",
+        cursor: "pointer", zIndex: 110,
+        transition: "all 0.3s",
+        boxShadow: "0 4px 15px rgba(0,0,0,0.3)"
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.background = "rgba(239, 68, 68, 0.8)";
+        e.currentTarget.style.background = "rgba(239, 68, 68, 0.9)";
         e.currentTarget.style.transform = "scale(1.1)";
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.background = "rgba(239, 68, 68, 0.4)";
+        e.currentTarget.style.background = "rgba(239, 68, 68, 0.6)";
         e.currentTarget.style.transform = "scale(1)";
       }}
     >
-       ←
+       <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="square" strokeLinejoin="miter">
+         <path d="M15 18l-6-6 6-6"/>
+       </svg>
     </button>
   );
 
