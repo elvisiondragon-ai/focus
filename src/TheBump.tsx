@@ -621,6 +621,7 @@ export default function TheBump({ session }: { session: any }) {
             <div style={{ fontSize:46,marginBottom:10 }}>🌸</div>
             <div style={{ fontSize:15,color:diff.color,letterSpacing:3,textTransform:"uppercase",marginBottom:6 }}>Protokol Selesai</div>
             <div style={{ fontSize:19,color:"#ffffff",marginBottom:10 }}>Misi Fokus Berhasil</div>
+            <div style={{ fontSize:14,color:"#94a3b8",lineHeight:1.6,marginBottom:20 }}>Sekarang lupakan dan fokuslah pada hari Anda, semua bump tadi akan terjadi otomatis di system Anda.</div>
             <button onClick={() => { setComplete(false); resetSession(); setScreen("select"); }} style={{ padding:"11px 24px",borderRadius:10,background:diff.color,border:"none",color:"#000",fontWeight:"bold",fontSize:15,cursor:"pointer" }}>Selesai</button>
           </div>
         </div>

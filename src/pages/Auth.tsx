@@ -210,6 +210,12 @@ export function Auth() {
                 </div>
 
                 <Card className="p-6 bg-gradient-secondary border-border shadow-2xl">
+                    <div className="mb-6 p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl text-center">
+                        <p className="text-xs text-blue-300 flex items-center justify-center gap-2">
+                            <Sparkles className="w-3 h-3" />
+                            Bisa Login dengan menggunakan Akun Ecosystem eL Vision yang sudah ada
+                        </p>
+                    </div>
                     <Tabs value={activeTab} onValueChange={(v: any) => setActiveTab(v as any)} className="w-full">
                         <TabsList className="grid w-full grid-cols-2 mb-6 bg-white/5 p-1 rounded-lg">
                             <TabsTrigger value="login" className={`font-bold transition-all ${activeTab === 'login' ? 'bg-blue-600 shadow-lg' : ''}`}>Login</TabsTrigger>
