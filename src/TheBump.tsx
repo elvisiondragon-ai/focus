@@ -29,24 +29,24 @@ const FOCUS_BUBBLES = [
 
 const BUMP_BUBBLES: Record<number, { atPct: number; text: (desire?: string) => string }[]> = {
   0: [
-    { atPct: 1,  text: () => "Sekarang niatkan yang kamu lihat ini... Jelas begitu dalam" },
-    { atPct: 10, text: () => "Niatkan saja jelas begitu dalam, tidak ada keharusan terjadi" },
-    { atPct: 50, text: () => "Pertahankan niat yang dalam and santai ini..." },
+    { atPct: 5,  text: () => "Sekarang niatkan yang kamu lihat ini... Jelas begitu dalam" },
+    { atPct: 40, text: () => "Niatkan saja jelas begitu dalam, tidak ada keharusan terjadi" },
+    { atPct: 75, text: () => "Pertahankan niat yang dalam and santai ini..." },
   ],
   1: [
-    { atPct: 1,  text: () => "Sekarang niatkan yang kamu lihat ini... Pasrah begitu dalam" },
-    { atPct: 10, text: () => "Niatkan saja pasrah begitu dalam, tidak ada keharusan terjadi" },
-    { atPct: 50, text: () => "Pertahankan kepasrahan yang dalam and santai ini..." },
+    { atPct: 5,  text: () => "Sekarang niatkan yang kamu lihat ini... Pasrah begitu dalam" },
+    { atPct: 40, text: () => "Niatkan saja pasrah begitu dalam, tidak ada keharusan terjadi" },
+    { atPct: 75, text: () => "Pertahankan kepasrahan yang dalam and santai ini..." },
   ],
   2: [
-    { atPct: 1,  text: (d) => `Sekarang niatkan "${d}" itu terasa begitu jelas yang dalam` },
-    { atPct: 10, text: (d) => `Niatkan saja "${d}" itu jelas begitu dalam, tidak ada keharusan terjadi` },
-    { atPct: 50, text: () => "Pertahankan niat kejelasan yang dalam and santai ini..." },
+    { atPct: 5,  text: (d) => `Sekarang niatkan "${d}" itu terasa begitu jelas yang dalam` },
+    { atPct: 40, text: (d) => `Niatkan saja "${d}" itu jelas begitu dalam, tidak ada keharusan terjadi` },
+    { atPct: 75, text: () => "Pertahankan niat kejelasan yang dalam and santai ini..." },
   ],
   3: [
-    { atPct: 1,  text: (d) => `Sekarang niatkan "${d}" itu pasrah begitu dalam` },
-    { atPct: 10, text: (d) => `Niatkan saja "${d}" itu pasrah begitu dalam, tidak ada keharusan terjadi` },
-    { atPct: 50, text: () => "Pertahankan kepasrahan yang dalam and santai ini..." },
+    { atPct: 5,  text: (d) => `Sekarang niatkan "${d}" itu pasrah begitu dalam` },
+    { atPct: 40, text: (d) => `Niatkan saja "${d}" itu pasrah begitu dalam, tidak ada keharusan terjadi` },
+    { atPct: 75, text: () => "Pertahankan kepasrahan yang dalam and santai ini..." },
   ],
 };
 
@@ -324,7 +324,6 @@ export default function TheBump({ session }: { session: any }) {
     }
     if (!isVolumeFull) { showToast("Volume Fokus kamu belum cukup untuk Bump (Wajib 100%)"); return; }
     setIsBumping(true);
-    setVolume(0);
     spawnRing(BUMPS[i].color);
   };
 
