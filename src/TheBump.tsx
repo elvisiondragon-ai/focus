@@ -23,6 +23,29 @@ const FOCUS_BUBBLES = [
   { atPct: 99, text: "Volume hampir penuh — pertahankan..." },
 ];
 
+const BUMP_BUBBLES: Record<number, { atPct: number; text: (desire?: string) => string }[]> = {
+  0: [ // Bump 1 - Reality Deep Clarity
+    { atPct: 1,  text: () => "Sekarang niatkan yang kamu lihat ini... Jelas begitu dalam" },
+    { atPct: 10, text: () => "Niatkan saja jelas begitu dalam, tidak ada keharusan terjadi" },
+    { atPct: 50, text: () => "Pertahankan niat yang dalam dan santai ini..." },
+  ],
+  1: [ // Bump 2 - Reality Deep Relax
+    { atPct: 1,  text: () => "Sekarang niatkan yang kamu lihat ini... Pasrah begitu dalam" },
+    { atPct: 10, text: () => "Niatkan saja pasrah begitu dalam, tidak ada keharusan terjadi" },
+    { atPct: 50, text: () => "Pertahankan kepasrahan yang dalam dan santai ini..." },
+  ],
+  2: [ // Bump 3 - Keinginan Deep Clarity
+    { atPct: 1,  text: (d) => `Sekarang niatkan "${d}" itu terasa begitu jelas yang dalam` },
+    { atPct: 10, text: (d) => `Niatkan saja "${d}" itu jelas begitu dalam, tidak ada keharusan terjadi` },
+    { atPct: 50, text: () => "Pertahankan niat kejelasan yang dalam dan santai ini..." },
+  ],
+  3: [ // Bump 4 - Keinginan Deep Relax
+    { atPct: 1,  text: (d) => `Sekarang niatkan "${d}" itu pasrah begitu dalam` },
+    { atPct: 10, text: (d) => `Niatkan saja "${d}" itu pasrah begitu dalam, tidak ada keharusan terjadi` },
+    { atPct: 50, text: () => "Pertahankan kepasrahan yang dalam dan santai ini..." },
+  ],
+};
+
 function fmt(sec: number) {
   const s = Math.floor(sec);
   const m = Math.floor(s / 60);
@@ -93,6 +116,7 @@ export default function TheBump() {
   const [toast, setToast] = useState<string | null>(null);
   
   const [activeBubble, setActiveBubble] = useState<string | null>(null);
+  const [shownFocus, setShownFocus] = useState<Set<number>>(new Set());
   const bubbleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [isDesktop, setIsDesktop] = useState(window.innerWidth > 1024);
@@ -124,13 +148,22 @@ export default function TheBump() {
         const pct = Math.min(100, (next / diff.focusSec) * 100);
         setVolume(pct);
 
-        // ── BUBBLE TRIGGER ──────────────────────────────
+        // ── FOCUS BUBBLE TRIGGER ──────────────────────────────
         const floorPct = Math.floor(pct);
-        const match = FOCUS_BUBBLES.find(b => b.atPct === floorPct);
-        if (match) {
-          setActiveBubble(match.text);
-          if (bubbleTimerRef.current) clearTimeout(bubbleTimerRef.current);
-          bubbleTimerRef.current = setTimeout(() => setActiveBubble(null), 4000);
+        const stepKey = protocolStep * 1000 + floorPct;
+        
+        if (!shownFocus.has(stepKey)) {
+          const match = FOCUS_BUBBLES.find(b => b.atPct === floorPct);
+          if (match) {
+            setActiveBubble(match.text);
+            if (bubbleTimerRef.current) clearTimeout(bubbleTimerRef.current);
+            bubbleTimerRef.current = setTimeout(() => setActiveBubble(null), 4000);
+            setShownFocus(prev => {
+              const next2 = new Set(prev);
+              next2.add(stepKey);
+              return next2;
+            });
+          }
         }
         // ────────────────────────────────────────────────
 
@@ -147,7 +180,7 @@ export default function TheBump() {
       });
     }, 1000);
     return () => clearInterval(id);
-  }, [running, isBumping, diff, complete, protocolStep]);
+  }, [running, isBumping, diff, complete, protocolStep, shownFocus]);
 
   // Timer: Bump Phase (Step 2-5)
   useEffect(() => {
@@ -159,6 +192,27 @@ export default function TheBump() {
         const next = prev + 1;
         const remainingPct = 100 - (next / bumpDurationSec) * 100;
         setVolume(Math.max(0, remainingPct));
+
+        // ── BUMP BUBBLE TRIGGER ─────────────────────────
+        const progressPct = Math.floor((next / bumpDurationSec) * 100);
+        const activeBumpIdx = protocolStep - 2;
+        const key = (activeBumpIdx + 10) * 1000 + progressPct; 
+        
+        if (!shownFocus.has(key)) {
+          const bumpBubbleList = BUMP_BUBBLES[activeBumpIdx] ?? [];
+          const match = bumpBubbleList.find(b => b.atPct === progressPct);
+          if (match) {
+            setActiveBubble(match.text(desire));
+            if (bubbleTimerRef.current) clearTimeout(bubbleTimerRef.current);
+            bubbleTimerRef.current = setTimeout(() => setActiveBubble(null), 4000);
+            setShownFocus(prev2 => {
+              const next2 = new Set(prev2);
+              next2.add(key);
+              return next2;
+            });
+          }
+        }
+        // ────────────────────────────────────────────────
 
         if (next >= bumpDurationSec) {
           setIsBumping(false);
@@ -185,7 +239,7 @@ export default function TheBump() {
       });
     }, 1000);
     return () => clearInterval(id);
-  }, [isBumping, bumpDurationSec, bumpDone, complete, protocolStep]);
+  }, [isBumping, bumpDurationSec, bumpDone, complete, protocolStep, desire, shownFocus]);
 
   // Pulse
   useEffect(() => {
@@ -235,6 +289,7 @@ export default function TheBump() {
     setIsBumping(false); setBumpElapsed(0); setProtocolStep(1);
     setBumpDone([false,false,false,false]); setComplete(false); setRings([]);
     setActiveBubble(null);
+    setShownFocus(new Set());
   };
 
   const pulseScale = running || isBumping ? 1 + Math.sin(pulseT * 3) * 0.022 * (isBumping ? 1 : volume / 100) : 1;
@@ -257,6 +312,7 @@ export default function TheBump() {
           setElapsed(0);
           setBumpDone([false, false, false, false]);
           setActiveBubble(null);
+          setShownFocus(new Set());
         } else {
           setVolume(100);
           const newDone = [...bumpDone];
@@ -264,6 +320,15 @@ export default function TheBump() {
             if (i >= 0) newDone[i] = false;
           }
           setBumpDone(newDone);
+          // When going back to a step, we might want to allow bubbles to show again for that step
+          setShownFocus(prev => {
+            const next = new Set(prev);
+            const minKeyToRemove = prevStep * 1000;
+            for (const key of next) {
+              if (key >= minKeyToRemove) next.delete(key);
+            }
+            return next;
+          });
         }
         showToast(`Kembali ke Tahap ${prevStep}`);
       } else {
@@ -309,14 +374,14 @@ export default function TheBump() {
   );
 
   const Toast = () => toast ? (
-    <div style={{ position: "fixed", bottom: 40, left: "50%", transform: "translateX(-50%)", background: "rgba(0,0,0,0.8)", border: `1px solid ${diff.color}`, color: "white", padding: "12px 24px", borderRadius: 12, fontSize: 15, zIndex: 3000, textAlign: "center", boxShadow: "0 10px 30px rgba(0,0,0,0.5)", pointerEvents: "none", animation: "fadeIn 0.3s" }}>
+    <div style={{ position: "fixed", bottom: 40, left: "50%", transform: "translateX(-50%)", background: "rgba(0,0,0,0.8)", border: `1px solid ${diff.color}`, color: "white", padding: "12px 24px", borderRadius: 12, fontSize: 15, zIndex: 2000, textAlign: "center", boxShadow: "0 10px 30px rgba(0,0,0,0.5)", pointerEvents: "none", animation: "fadeIn 0.3s" }}>
       {toast}
     </div>
   ) : null;
 
   // ── SELECT SCREEN ──────────────────────────────────────────────────
   if (screen === "select") {
-    const selDiff = DIFFICULTIES.find(d => d.id === diffId);
+    const selDiff = DIFFICULTIES.find(d => d.id === diffId) || DIFFICULTIES[0];
     return (
       <div style={{ minHeight:"100vh", width: "100%", background:"radial-gradient(ellipse at 50% 0%,#0c1445 0%,#020617 70%)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"32px 16px",fontFamily:"Georgia,'Times New Roman',serif",color:"#ffffff", position: "relative" }}>
         {renderBackBtn()}
@@ -397,7 +462,8 @@ export default function TheBump() {
       // //////////////////////////////////////////////////////////////////
       padding: isDesktop ? "48px 80px" : "18px 16px 48px",
       fontFamily:"Georgia,'Times New Roman',serif",
-color:"#ffffff",position:"relative",overflowX:"hidden" }}>
+      color:"#ffffff",position:"relative",overflowX:"hidden" 
+    }}>
       {renderBackBtn()}
       <Toast />
       {showTutorial && <Tutorial onClose={() => setShowTutorial(false)} accentColor={diff.color} />}
@@ -479,8 +545,8 @@ color:"#ffffff",position:"relative",overflowX:"hidden" }}>
               />
             </svg>
 
-            {/* FOCUS BUBBLE */}
-            {activeBubble && !isBumping && (
+            {/* BUBBLE UI */}
+            {activeBubble && (
               <div style={{
                 position: "absolute",
                 top: "50%",
@@ -586,7 +652,7 @@ color:"#ffffff",position:"relative",overflowX:"hidden" }}>
             <div style={{ fontSize:15,color:"#ffffff",letterSpacing:3,textTransform:"uppercase",textAlign: isDesktop ? "left" : "center", marginBottom:12 }}>
               ⚡ PROTOKOL BUMP — Step {protocolStep}/6
             </div>
-            <div style={{ display:"grid", gridTemplateColumns: isDesktop ? "1fr 1fr" : "1fr 1fr", gap: 14, width: "100%" }}>
+            <div style={{ display:"grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: 14, width: "100%" }}>
               {BUMPS.map((b,i) => {
                 const done = bumpDone[i];
                 const active = isBumping && (protocolStep === i + 2);
