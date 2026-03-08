@@ -1,53 +1,49 @@
-import { Suspense, lazy } from 'react';
-
-// --- 1. THE NUKE SNIPPET (Cache Busting) ---
-const APP_VERSION = '2026.03.08.19'; // Force update version
-
-if (localStorage.getItem('v_cache') !== APP_VERSION) {
-  // 1. Clear Service Workers (Safe Check)
-  if (typeof navigator !== 'undefined' && navigator.serviceWorker) {
-    navigator.serviceWorker.getRegistrations().then(regs => {
-      if (regs && regs.forEach) regs.forEach(r => r.unregister());
-    }).catch(() => {});
-  }
-
-  // 2. Clear all Browser Caches (Safe Check)
-  if (typeof window !== 'undefined' && window.caches) {
-    window.caches.keys().then(names => {
-      if (names && names.forEach) names.forEach(n => window.caches.delete(n));
-    }).catch(() => {});
-  }
-
-  // 3. Update version and Hard Reload
-  localStorage.setItem('v_cache', APP_VERSION);
-  window.location.reload();
-}
-
-// --- 2. ROUTE-BASED CODE SPLITTING (Lazy Loading) ---
-const TheBump = lazy(() => import('./TheBump.tsx'));
-
-const LoadingFallback = () => (
-  <div style={{ 
-    minHeight: '100vh', 
-    background: '#020617', 
-    display: 'flex', 
-    alignItems: 'center', 
-    justifyContent: 'center',
-    color: '#7dd3fc',
-    fontFamily: 'Georgia, serif'
-  }}>
-    <div style={{ textAlign: 'center' }}>
-      <div style={{ fontSize: 24, marginBottom: 10 }}>◎</div>
-      <div style={{ fontSize: 12, letterSpacing: 4, textTransform: 'uppercase' }}>Loading eL Vision</div>
-    </div>
-  </div>
-);
+import { useEffect, useState } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { supabase } from './lib/supabase';
+import { Auth } from './pages/Auth';
+import TheBump from './TheBump';
 
 function App() {
+  const [session, setSession] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setLoading(false);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0F0F23] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
   return (
-    <Suspense fallback={<LoadingFallback />}>
-      <TheBump />
-    </Suspense>
+    <BrowserRouter>
+      <Routes>
+        <Route 
+          path="/auth" 
+          element={!session ? <Auth /> : <Navigate to="/" />} 
+        />
+        <Route 
+          path="/" 
+          element={session ? <TheBump /> : <Navigate to="/auth" />} 
+        />
+      </Routes>
+    </BrowserRouter>
   );
 }
 

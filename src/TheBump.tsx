@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from "react";
+import { supabase } from "./lib/supabase";
+import { Zap } from "lucide-react";
 
 const DIFFICULTIES = [
   { id: "easy",   label: "Easy",   icon: "🌱", focusSec: 60,   color: "#4ade80", accent: "#16a34a", desc: "1 Menit Focus" },
@@ -27,22 +29,22 @@ const BUMP_BUBBLES: Record<number, { atPct: number; text: (desire?: string) => s
   0: [ // Bump 1 - Reality Deep Clarity
     { atPct: 1,  text: () => "Sekarang niatkan yang kamu lihat ini... Jelas begitu dalam" },
     { atPct: 10, text: () => "Niatkan saja jelas begitu dalam, tidak ada keharusan terjadi" },
-    { atPct: 50, text: () => "Pertahankan niat yang dalam dan santai ini..." },
+    { atPct: 50, text: () => "Pertahankan niat yang dalam and santai ini..." },
   ],
   1: [ // Bump 2 - Reality Deep Relax
     { atPct: 1,  text: () => "Sekarang niatkan yang kamu lihat ini... Pasrah begitu dalam" },
     { atPct: 10, text: () => "Niatkan saja pasrah begitu dalam, tidak ada keharusan terjadi" },
-    { atPct: 50, text: () => "Pertahankan kepasrahan yang dalam dan santai ini..." },
+    { atPct: 50, text: () => "Pertahankan kepasrahan yang dalam and santai ini..." },
   ],
   2: [ // Bump 3 - Keinginan Deep Clarity
     { atPct: 1,  text: (d) => `Sekarang niatkan "${d}" itu terasa begitu jelas yang dalam` },
     { atPct: 10, text: (d) => `Niatkan saja "${d}" itu jelas begitu dalam, tidak ada keharusan terjadi` },
-    { atPct: 50, text: () => "Pertahankan niat kejelasan yang dalam dan santai ini..." },
+    { atPct: 50, text: () => "Pertahankan niat kejelasan yang dalam and santai ini..." },
   ],
   3: [ // Bump 4 - Keinginan Deep Relax
     { atPct: 1,  text: (d) => `Sekarang niatkan "${d}" itu pasrah begitu dalam` },
     { atPct: 10, text: (d) => `Niatkan saja "${d}" itu pasrah begitu dalam, tidak ada keharusan terjadi` },
-    { atPct: 50, text: () => "Pertahankan kepasrahan yang dalam dan santai ini..." },
+    { atPct: 50, text: () => "Pertahankan kepasrahan yang dalam and santai ini..." },
   ],
 };
 
@@ -121,6 +123,9 @@ export default function TheBump() {
 
   const [isDesktop, setIsDesktop] = useState(window.innerWidth > 1024);
   const ringId = useRef(0);
+  
+  // History Tracking
+  const [sessionId, setSessionId] = useState<string | null>(null);
 
   useEffect(() => {
     const handleResize = () => setIsDesktop(window.innerWidth > 1024);
@@ -128,14 +133,72 @@ export default function TheBump() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Scroll to top on screen change
+  // Scroll to top on screen or step change
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, [screen]);
+  }, [screen, protocolStep]);
 
   const diff = DIFFICULTIES.find(d => d.id === diffId) || DIFFICULTIES[0];
   const bumpDurationSec = diff.focusSec * 0.25;
   const isVolumeFull = volume >= 100;
+
+  // Tracking: Start Session
+  const startTracking = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('focus_history')
+        .insert({
+          user_id: user.id,
+          user_email: user.email,
+          difficulty: diff.label,
+          desire_text: desire,
+          status: 'started'
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      setSessionId(data.id);
+    } catch (err) {
+      console.error('Failed to start tracking:', err);
+    }
+  };
+
+  // Tracking: Complete Session
+  const finishTracking = async () => {
+    if (!sessionId) return;
+    try {
+      const totalFocusTime = (protocolStep === 6 ? diff.focusSec : 0) + (bumpDone.filter(Boolean).length * bumpDurationSec);
+      
+      await supabase
+        .from('focus_history')
+        .update({
+          status: 'completed',
+          finished_at: new Date().toISOString(),
+          focus_time: Math.floor(totalFocusTime),
+          bump_count: bumpDone.filter(Boolean).length
+        })
+        .eq('id', sessionId);
+    } catch (err) {
+      console.error('Failed to finish tracking:', err);
+    }
+  };
+
+  // Tracking: Update Bump Count
+  const updateBumpTracking = async (count: number) => {
+    if (!sessionId) return;
+    try {
+      await supabase
+        .from('focus_history')
+        .update({ bump_count: count })
+        .eq('id', sessionId);
+    } catch (err) {
+      console.error('Failed to update bump tracking:', err);
+    }
+  };
 
   // Timer: Focus Phase (Step 1 & Step 6)
   useEffect(() => {
@@ -148,7 +211,6 @@ export default function TheBump() {
         const pct = Math.min(100, (next / diff.focusSec) * 100);
         setVolume(pct);
 
-        // ── FOCUS BUBBLE TRIGGER ──────────────────────────────
         const floorPct = Math.floor(pct);
         const stepKey = protocolStep * 1000 + floorPct;
         
@@ -165,14 +227,14 @@ export default function TheBump() {
             });
           }
         }
-        // ────────────────────────────────────────────────
 
         if (pct >= 100) {
           setRunning(false);
           if (protocolStep === 1) {
-            setProtocolStep(2); // Move to Bump Phase
+            setProtocolStep(2);
             showToast("Volume Penuh. Siap untuk Bump 1.");
           } else if (protocolStep === 6) {
+            finishTracking();
             setTimeout(() => setComplete(true), 700);
           }
         }
@@ -180,7 +242,7 @@ export default function TheBump() {
       });
     }, 1000);
     return () => clearInterval(id);
-  }, [running, isBumping, diff, complete, protocolStep, shownFocus]);
+  }, [running, isBumping, diff, complete, protocolStep, shownFocus, sessionId]);
 
   // Timer: Bump Phase (Step 2-5)
   useEffect(() => {
@@ -193,7 +255,6 @@ export default function TheBump() {
         const remainingPct = 100 - (next / bumpDurationSec) * 100;
         setVolume(Math.max(0, remainingPct));
 
-        // ── BUMP BUBBLE TRIGGER ─────────────────────────
         const progressPct = Math.floor((next / bumpDurationSec) * 100);
         const activeBumpIdx = protocolStep - 2;
         const key = (activeBumpIdx + 10) * 1000 + progressPct; 
@@ -212,7 +273,6 @@ export default function TheBump() {
             });
           }
         }
-        // ────────────────────────────────────────────────
 
         if (next >= bumpDurationSec) {
           setIsBumping(false);
@@ -222,10 +282,11 @@ export default function TheBump() {
           const newDone = [...bumpDone];
           newDone[bumpIndex] = true;
           setBumpDone(newDone);
+          updateBumpTracking(newDone.filter(Boolean).length);
           
           const nextStep = protocolStep + 1;
           setProtocolStep(nextStep);
-          setVolume(nextStep === 6 ? 0 : 100); // Step 6 starts at 0, others stay at 100 for next bump click
+          setVolume(nextStep === 6 ? 0 : 100);
           setElapsed(0);
           
           if (nextStep === 6) {
@@ -239,7 +300,7 @@ export default function TheBump() {
       });
     }, 1000);
     return () => clearInterval(id);
-  }, [isBumping, bumpDurationSec, bumpDone, complete, protocolStep, desire, shownFocus]);
+  }, [isBumping, bumpDurationSec, bumpDone, complete, protocolStep, desire, shownFocus, sessionId]);
 
   // Pulse
   useEffect(() => {
@@ -265,7 +326,6 @@ export default function TheBump() {
   const handleBump = (i: number) => {
     if (bumpDone[i] || isBumping) return;
     
-    // Check if it's the correct sequential bump
     if (protocolStep !== (i + 2)) {
       if (protocolStep === 1) {
         showToast("Isi Focus (Volume 100%) terlebih dahulu");
@@ -290,6 +350,7 @@ export default function TheBump() {
     setBumpDone([false,false,false,false]); setComplete(false); setRings([]);
     setActiveBubble(null);
     setShownFocus(new Set());
+    setSessionId(null);
   };
 
   const pulseScale = running || isBumping ? 1 + Math.sin(pulseT * 3) * 0.022 * (isBumping ? 1 : volume / 100) : 1;
@@ -298,7 +359,6 @@ export default function TheBump() {
   const dash = circ * (volume / 100);
 
   function HandleKembali() {
-    console.log("HandleKembali triggered - screen:", screen, "step:", protocolStep);
     if (screen === "session") {
       if (protocolStep > 1) {
         const prevStep = protocolStep - 1;
@@ -320,7 +380,6 @@ export default function TheBump() {
             if (i >= 0) newDone[i] = false;
           }
           setBumpDone(newDone);
-          // When going back to a step, we might want to allow bubbles to show again for that step
           setShownFocus(prev => {
             const next = new Set(prev);
             const minKeyToRemove = prevStep * 1000;
@@ -358,14 +417,6 @@ export default function TheBump() {
         transition: "all 0.3s",
         boxShadow: "0 6px 20px rgba(59, 130, 246, 0.4)"
       }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.background = "linear-gradient(135deg, #60a5fa, #3b82f6)";
-        e.currentTarget.style.transform = "scale(1.1)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.background = "linear-gradient(135deg, #3b82f6, #2563eb)";
-        e.currentTarget.style.transform = "scale(1)";
-      }}
     >
        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="square" strokeLinejoin="miter" style={{ pointerEvents: "none" }}>
          <path d="M15 18l-6-6 6-6"/>
@@ -388,13 +439,12 @@ export default function TheBump() {
         {showTutorial && <Tutorial onClose={() => setShowTutorial(false)} accentColor="#7dd3fc" />}
 
         <div style={{ textAlign:"center",marginBottom:20 }}>
-          <img src="/logo.png" alt="Logo" style={{ width: 80, height: 80, marginBottom: 16, borderRadius: "50%", boxShadow: "0 0 20px rgba(125, 211, 252, 0.3)" }} />
+          <Zap className="w-16 h-16 mx-auto text-blue-400 mb-4" />
           <div style={{ fontSize:15,letterSpacing:8,color:"#ffffff",textTransform:"uppercase",marginBottom:8 }}>eL Vision Group</div>
           <div style={{ fontSize:15,letterSpacing:5,color:"#7dd3fc",textTransform:"uppercase",marginBottom:6 }}>Metode Fokus Konsentrasi</div>
           <h1 style={{ fontSize: isDesktop ? 64 : 54,fontWeight:300,margin:0,letterSpacing:4,color:"#ffffff" }}>
             The <span style={{ fontStyle:"italic",color:"#7dd3fc" }}>Bump</span>
           </h1>
-          <p style={{ fontSize:15,color:"#ffffff",marginTop:8,letterSpacing:1 }}>Sundul · Focus yang Terarah · Realitas yang Dalam</p>
         </div>
 
 
@@ -409,9 +459,6 @@ export default function TheBump() {
           }}>
             ? The Protocol
           </button>
-          <div style={{ fontSize:15,color:"#ffffff",lineHeight:1.7,maxWidth:320,margin:"0 auto" }}>
-            Pilih tingkat kesulitan sesuai kemampuan fokusmu saat ini
-          </div>
         </div>
 
         <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,maxWidth:380,width:"100%",marginBottom:24 }}>
@@ -421,18 +468,16 @@ export default function TheBump() {
               border: `2px solid ${diffId===d.id ? d.color : "#1e293b"}`,
               borderRadius:14,padding:"16px 12px",cursor:"pointer",textAlign:"left",
               transition:"all 0.3s",
-              boxShadow: diffId===d.id ? `0 0 22px ${d.color}33` : "none",
             }}>
               <div style={{ fontSize:22,marginBottom:6 }}>{d.icon}</div>
-              <div style={{ fontSize:15,color:diffId===d.id?d.color:"#ffffff",fontWeight:"bold",fontFamily:"Georgia,serif" }}>{d.label}</div>
+              <div style={{ fontSize:15,color:diffId===d.id?d.color:"#ffffff",fontWeight:"bold" }}>{d.label}</div>
               <div style={{ fontSize:15,color:"#ffffff",marginTop:3 }}>{d.desc}</div>
-              <div style={{ fontSize:15,color:diffId===d.id?d.color+"99":"#ffffff",marginTop:6 }}>Bump Durasi = {fmt(d.focusSec*0.25)}</div>
             </button>
           ))}
         </div>
 
         <div style={{ display:"flex",gap:10 }}>
-          <button onClick={() => { if (diffId) { resetSession(); setScreen("session"); } }} style={{
+          <button onClick={() => { if (diffId) { resetSession(); setScreen("session"); startTracking(); } }} style={{
             padding:"13px 40px",borderRadius:12,
             background: diffId ? `linear-gradient(135deg,${selDiff?.accent},${selDiff?.color}88)` : "#1e293b",
             border:`1px solid ${diffId ? selDiff?.color : "#334155"}`,
@@ -440,8 +485,6 @@ export default function TheBump() {
             cursor:diffId?"pointer":"not-allowed",letterSpacing:1,transition:"all 0.4s",
           }}>Mulai Sesi →</button>
         </div>
-
-        <div style={{ marginTop:32,fontSize:15,color:"#ffffff",letterSpacing:1 }}>© eL Vision Group</div>
       </div>
     );
   }
@@ -455,21 +498,12 @@ export default function TheBump() {
       display:"flex",
       flexDirection:"column",
       alignItems:"center",
-      // //////////////////////////////////////////////////////////////////
-      // // NOTES: Layout Responsif
-      // // Desktop: padding: 48px 80px
-      // // Mobile: padding: 18px 16px 48px
-      // //////////////////////////////////////////////////////////////////
       padding: isDesktop ? "48px 80px" : "18px 16px 48px",
       fontFamily:"Georgia,'Times New Roman',serif",
       color:"#ffffff",position:"relative",overflowX:"hidden" 
     }}>
       {renderBackBtn()}
       <Toast />
-      {showTutorial && <Tutorial onClose={() => setShowTutorial(false)} accentColor={diff.color} />}
-
-      {/* Ambient Glow */}
-      <div style={{ position:"fixed",top:"12%",left:"50%",transform:"translateX(-50%)",width:480,height:480,borderRadius:"50%",background:`radial-gradient(circle,${diff.accent}14 0%,transparent 70%)`,pointerEvents:"none",transition:"background 1.2s", zIndex: 0 }} />
 
       {/* COMPLETE OVERLAY */}
       {complete && (
@@ -477,250 +511,103 @@ export default function TheBump() {
           <div style={{ background:"#0f172a",border:`1px solid ${diff.color}44`,borderRadius:20,padding:"30px 26px",textAlign:"center",maxWidth:320 }}>
             <div style={{ fontSize:46,marginBottom:10 }}>🌸</div>
             <div style={{ fontSize:15,color:diff.color,letterSpacing:3,textTransform:"uppercase",marginBottom:6 }}>Protokol Selesai</div>
-            <div style={{ fontSize:19,color:"#ffffff",fontFamily:"Georgia,serif",marginBottom:10 }}>Misi Fokus Berhasil</div>
-            <div style={{ fontSize:15,color:"#ffffff",lineHeight:1.7,marginBottom:18 }}>
-              Sistem tetap bekerja otomatis di bawah sadar meski semua Bump telah dilupakan.<br/>
-              Pertahankan kejernihan ini sepanjang hari.
-            </div>
+            <div style={{ fontSize:19,color:"#ffffff",marginBottom:10 }}>Misi Fokus Berhasil</div>
             <button onClick={() => { setComplete(false); resetSession(); setScreen("select"); }} style={{ padding:"11px 24px",borderRadius:10,background:diff.color,border:"none",color:"#000",fontWeight:"bold",fontSize:15,cursor:"pointer" }}>Selesai</button>
           </div>
         </div>
       )}
 
-      {/* Header */}
-      <div style={{ 
-        textAlign: "center", 
-        marginBottom: isDesktop ? 48 : 12, 
-        zIndex: 1, 
-        width: "100%" 
-      }}>
-        <img src="/logo.png" alt="Logo" style={{ width: 40, height: 40, marginBottom: 8, borderRadius: "50%" }} />
-        <div style={{ fontSize:15,letterSpacing:6,color:"#ffffff",textTransform:"uppercase" }}>eL Vision Group</div>
-        <div style={{ display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginTop:2 }}>
-          <h1 style={{ fontSize: isDesktop ? 42 : 26,fontWeight:300,margin:0,letterSpacing:3,color:"#ffffff" }}>
-            The <span style={{ fontStyle:"italic",color:diff.color,transition:"color 0.8s" }}>Bump</span>
-          </h1>
-          <span style={{ fontSize:15,padding:"3px 8px",borderRadius:20,background:diff.color+"22",border:`1px solid ${diff.color}55`,color:diff.color,letterSpacing:1 }}>{diff.icon} {diff.label}</span>
-        </div>
-      </div>
+      {/* Orb Section */}
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0 }}>
+        <div style={{ position:"relative",width:320,height:320,marginBottom: isDesktop ? 24 : 8,zIndex:1 }}>
+          {rings.map(ring => (
+            <div key={ring.id} style={{ position:"absolute",top:"50%",left:"50%",width:280,height:280,borderRadius:"50%",border:`1.5px solid ${ring.color||diff.color}`,transform:`translate(-50%,-50%) scale(${ring.scale})`,opacity:ring.opacity,pointerEvents:"none" }} />
+          ))}
+          <svg width={320} height={320} style={{ position:"absolute",top:0,left:0 }}>
+            <circle cx={cx} cy={cy} r={r} fill="none" stroke="#1e293b" strokeWidth={10} />
+            <circle cx={cx} cy={cy} r={r} fill="none" stroke={isBumping ? BUMPS[protocolStep - 2]?.color || diff.color : diff.color} strokeWidth={10}
+              strokeDasharray={`${dash} ${circ}`} strokeLinecap="round"
+              transform={`rotate(-90 ${cx} ${cy})`}
+            />
+          </svg>
 
-      <div style={{ 
-        display: "flex", 
-        flexDirection: isDesktop ? "row" : "column",
-        alignItems: isDesktop ? "flex-start" : "center",
-        justifyContent: "center",
-        gap: isDesktop ? 60 : 0,
-        zIndex: 1, 
-        maxWidth: isDesktop ? 1100 : 800, 
-        width: "100%" 
-      }}>
-        {/* ////////////////////////////////////////////////////////////////// */}
-        {/* // INI DESKTOP VERSION (Layout Utama Centered)                   // */}
-        {/* // INI MOBILE VERSION (Layout Utama Centered)                    // */}
-        {/* // Jangan salah edit yah, perbedaan hanya pada margin & padding. // */}
-        {/* ////////////////////////////////////////////////////////////////// */}
-
-        {/* Orb Section */}
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0 }}>
-
-          <div style={{ position:"relative",width:320,height:320,marginBottom: isDesktop ? 24 : 8,zIndex:1 }}>
-            {rings.map(ring => (
-              <div key={ring.id} style={{ position:"absolute",top:"50%",left:"50%",width:280,height:280,borderRadius:"50%",border:`1.5px solid ${ring.color||diff.color}`,transform:`translate(-50%,-50%) scale(${ring.scale})`,opacity:ring.opacity,pointerEvents:"none" }} />
-            ))}
-            <svg width={320} height={320} style={{ position:"absolute",top:0,left:0 }}>
-              <defs>
-                <radialGradient id="og2" cx="50%" cy="35%" r="60%">
-                  <stop offset="0%" stopColor={diff.color} stopOpacity="0.28" />
-                  <stop offset="100%" stopColor={diff.accent} stopOpacity="0.04" />
-                </radialGradient>
-              </defs>
-              <circle cx={cx} cy={cy} r={r} fill="none" stroke="#1e293b" strokeWidth={10} />
-              <circle cx={cx} cy={cy} r={r} fill="none" stroke={isBumping ? BUMPS[protocolStep - 2]?.color || diff.color : diff.color} strokeWidth={10}
-                strokeDasharray={`${dash} ${circ}`} strokeLinecap="round"
-                transform={`rotate(-90 ${cx} ${cy})`}
-                style={{ transition:"stroke 0.8s",filter:`drop-shadow(0 0 ${isBumping ? 25 : Math.floor(volume/100*22)}px ${isBumping ? BUMPS[protocolStep - 2]?.color || diff.accent : diff.accent})` }}
-              />
-              <circle cx={cx} cy={cy} r={78*(volume/100)+8} fill="url(#og2)"
-                transform={`scale(${pulseScale}) translate(${cx*(1-pulseScale)},${cy*(1-pulseScale)})`}
-              />
-            </svg>
-
-            {/* BUBBLE UI */}
-            {activeBubble && (
-              <div style={{
-                position: "absolute",
-                top: "50%",
-                left: "50%",
-                transform: "translate(-50%, -175px)",
-                background: "rgba(15, 23, 42, 0.92)",
-                border: `1px solid ${diff.color}66`,
-                borderRadius: 12,
-                padding: "10px 14px",
-                maxWidth: 220,
-                textAlign: "center",
-                pointerEvents: "none",
-                zIndex: 10,
-                animation: "bubbleFadeIn 0.4s ease",
-                boxShadow: `0 0 20px ${diff.color}22`,
-              }}>
-                <div style={{
-                  fontSize: 15,
-                  color: diff.color,
-                  lineHeight: 1.6,
-                  fontStyle: "italic",
-                  fontFamily: "Georgia, serif",
-                }}>
-                  "{activeBubble}"
-                </div>
-                {/* Arrow bawah */}
-                <div style={{
-                  position: "absolute",
-                  bottom: -7,
-                  left: "50%",
-                  transform: "translateX(-50%) rotate(45deg)",
-                  width: 12,
-                  height: 12,
-                  background: "rgba(15, 23, 42, 0.92)",
-                  border: `1px solid ${diff.color}66`,
-                  borderTop: "none",
-                  borderLeft: "none",
-                }} />
-              </div>
-            )}
-
-            <div style={{ position:"absolute",top:"50%",left:"50%",transform:`translate(-50%,-50%) scale(${pulseScale})`,textAlign:"center" }}>
-              <div style={{ fontSize:50,fontWeight:300,color:isBumping ? BUMPS[protocolStep - 2]?.color || diff.color : diff.color,lineHeight:1,letterSpacing:-2,transition:"color 0.8s" }}>
-                {Math.floor(volume)}<span style={{ fontSize:16,color:"#ffffff" }}>%</span>
-              </div>
-              <div style={{ fontSize:15,color:isBumping ? BUMPS[protocolStep - 2]?.accent || diff.accent : diff.accent,letterSpacing:3,textTransform:"uppercase",marginTop:2 }}>
-                {isBumping ? "Bumping..." : protocolStep === 6 ? "Penyelesaian" : "Volume"}
-              </div>
-              <div style={{ fontSize:15,color:"#ffffff",marginTop:3 }}>
-                {isBumping ? `sisa ${fmt(Math.max(0, bumpDurationSec - bumpElapsed))}` : running ? `sisa ${fmt(Math.max(0,diff.focusSec-elapsed))}` : volume>=100 ? (protocolStep === 6 ? "Hampir Selesai!" : "Siap Bump!") : "paused"}
-              </div>
-            </div>
-          </div>
-
-          <div style={{ marginTop:8,zIndex:1,display:"flex",gap:16,alignItems:"center", marginBottom: isDesktop ? 0 : 24 }}>
-            {[
-              { label:"Focus", val:fmt(elapsed) },
-              { label:"Protocol", val:isBumping ? "Bumping" : `Step ${protocolStep}/6` },
-              { label:"Status", val:`${bumpDone.filter(Boolean).length}/4` },
-            ].map((s,i) => (
-              <div key={i} style={{ display:"flex",alignItems:"center",gap:16 }}>
-                {i>0&&<div style={{ width:1,height:28,background:"#1e293b" }}/>}
-                <div style={{ textAlign:"center" }}>
-                  <div style={{ fontSize:15,color:"#ffffff",letterSpacing:2,textTransform:"uppercase" }}>{s.label}</div>
-                  <div style={{ fontSize:16,color:diff.color }}>{s.val}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Controls Section */}
-        <div style={{ 
-          display: "flex", 
-          flexDirection: "column", 
-          alignItems: isDesktop ? "flex-start" : "center", 
-          maxWidth: 460, 
-          width: "100%",
-          paddingTop: isDesktop ? 20 : 0
-        }}>
-          <div style={{ marginBottom:16,zIndex:1,display:"flex",alignItems:"center",gap:8 }}>
-            <span style={{ fontSize:15,color:"#ffffff" }}>Keinginan:</span>
-            {editingDesire ? (
-              <input autoFocus value={desire} onChange={e=>setDesire(e.target.value)} onBlur={()=>setEditingDesire(false)} onKeyDown={e=>e.key==="Enter"&&setEditingDesire(false)} style={{ background:"#1e293b",border:`1px solid ${diff.color}`,borderRadius:8,padding:"3px 10px",color:diff.color,fontSize:15,outline:"none",minWidth:120 }} />
-            ) : (
-              <button onClick={()=>setEditingDesire(true)} style={{ background:diff.color+"18",border:`1px solid ${diff.color}44`,borderRadius:8,padding:"3px 12px",color:diff.color,fontSize:15,cursor:"pointer" }}>{desire} ✏️</button>
-            )}
-          </div>
-
-          <div style={{ display:"flex",gap:8,zIndex:1,marginBottom:32,flexWrap:"wrap",justifyContent: isDesktop ? "flex-start" : "center" }}>
-            <button onClick={()=>setRunning(r=>!r)} disabled={isBumping || (isVolumeFull && protocolStep >= 2 && protocolStep <= 5)} style={{
-              padding:"11px 32px",borderRadius:12,
-              background:running?"#1e293b":isBumping?"#0c1422":`linear-gradient(135deg,${diff.accent},${diff.color}88)`,
-              border:`1px solid ${running?"#334155":diff.accent}`,
-              color:running?"#94a3b8":"#fff",fontSize:15,fontWeight:"bold",
-              cursor:(isBumping || (isVolumeFull && protocolStep >= 2 && protocolStep <= 5)) ?"not-allowed":"pointer",letterSpacing:1,transition:"all 0.3s",
+          {activeBubble && (
+            <div style={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -175px)",
+              background: "rgba(15, 23, 42, 0.92)",
+              border: `1px solid ${diff.color}66`,
+              borderRadius: 12,
+              padding: "10px 14px",
+              maxWidth: 220,
+              textAlign: "center",
+              zIndex: 10,
             }}>
-              {running?"⏸ Pause":isVolumeFull && protocolStep <= 5 ?"Wajib Bump": protocolStep === 6 ? "◎ Balik Focus" : "◎ Mulai Focus"}
-            </button>
-          </div>
+              <div style={{ fontSize: 15, color: diff.color, fontStyle: "italic" }}>"{activeBubble}"</div>
+            </div>
+          )}
 
-          <div style={{ zIndex:1,width:"100%" }}>
-            <div style={{ fontSize:15,color:"#ffffff",letterSpacing:3,textTransform:"uppercase",textAlign: isDesktop ? "left" : "center", marginBottom:12 }}>
-              ⚡ PROTOKOL BUMP — Step {protocolStep}/6
+          <div style={{ position:"absolute",top:"50%",left:"50%",transform:`translate(-50%,-50%) scale(${pulseScale})`,textAlign:"center" }}>
+            <div style={{ fontSize:50,fontWeight:300,color:isBumping ? BUMPS[protocolStep - 2]?.color || diff.color : diff.color,lineHeight:1 }}>
+              {Math.floor(volume)}<span style={{ fontSize:16,color:"#ffffff" }}>%</span>
             </div>
-            <div style={{ display:"grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: 14, width: "100%" }}>
-              {BUMPS.map((b,i) => {
-                const done = bumpDone[i];
-                const active = isBumping && (protocolStep === i + 2);
-                const isNext = protocolStep === (i + 2);
-                const canClick = isVolumeFull && isNext && !isBumping;
-                
-                return (
-                  <button key={b.id} onClick={()=>handleBump(i)} style={{
-                    padding: isDesktop ? "20px 16px" : "12px 10px",
-                    borderRadius:12,cursor: done || isBumping || !isNext ? "default" : "pointer",
-                    background:done?"#0f172a":active?b.color+"44":canClick?b.color+"33":"#0c1422",
-                    border:`1.5px solid ${done?"#1e293b":active?b.color:canClick?b.color:"#ffffff"}`,
-                    textAlign:"left",transition:"all 0.3s",
-                    opacity: done ? 0.6 : isNext || active ? 1 : 0.4,
-                    transform:active?"scale(0.96)":canClick?"scale(1.02)":"scale(1)",
-                    boxShadow:active||canClick?`0 0 20px ${b.color}44`:"none",
-                    position:"relative",overflow:"hidden",
-                  }}>
-                    {done&&<div style={{ position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",background:"#0f172acc",fontSize:20,color:"#4ade80" }}>✓</div>}
-                    <div style={{ fontSize: isDesktop ? 22 : 15,marginBottom:2,color:done?"#334155":b.color }}>{b.emoji}</div>
-                    <div style={{ fontSize: 15,color:done?"#ffffff":b.color,fontWeight:"bold",lineHeight:1.3 }}>{b.label}</div>
-                    <div style={{ fontSize: 17,color:"#ffffff",marginTop:1 }}>{b.sub}</div>
-                    
-                    {canClick && (
-                      <div style={{ marginTop: 8, fontSize: 15, color: b.color, fontWeight: "bold", textTransform: "uppercase", letterSpacing: 0.5, animation: "flash 1s infinite" }}>
-                         SIAP BUMP (Klik Sekarang) →
-                      </div>
-                    )}
-                    {active && (
-                      <div style={{ marginTop: 8, fontSize: 15, color: "#fff", fontWeight: "bold", textTransform: "uppercase" }}>
-                         Bumping... {Math.floor((bumpElapsed/bumpDurationSec)*100)}%
-                      </div>
-                    )}
-                  </button>
-                );
-              })}
+            <div style={{ fontSize:15,color:"#ffffff",marginTop:3 }}>
+              {isBumping ? `sisa ${fmt(Math.max(0, bumpDurationSec - bumpElapsed))}` : running ? `sisa ${fmt(Math.max(0,diff.focusSec-elapsed))}` : "paused"}
             </div>
-            {protocolStep === 1 && !isVolumeFull && (
-              <div style={{ textAlign: "center", marginTop:16, fontSize:15, color:diff.color, fontStyle:"italic" }}>
-                 Tahap 1: Fokus 1 Titik hingga Volume 100%...
-              </div>
-            )}
-            {protocolStep === 6 && !isVolumeFull && (
-              <div style={{ textAlign: "center", marginTop:16, fontSize:15, color:diff.color, fontStyle:"italic" }}>
-                 Tahap 6: Balik Focus. Fokus 1 Titik hingga Volume 100%...
-              </div>
-            )}
           </div>
         </div>
       </div>
 
-      <div style={{ marginTop: isDesktop ? 60 : 24,fontSize:15,color:"#ffffff",letterSpacing:1,zIndex:1 }}>© eL Vision Group · The Bump Method</div>
-      
-      <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translate(-50%, 20px); }
-          to { opacity: 1; transform: translate(-50%, 0); }
-        }
-        @keyframes flash {
-          0% { opacity: 0.4; }
-          50% { opacity: 1; }
-          100% { opacity: 0.4; }
-        }
-        @keyframes bubbleFadeIn {
-          from { opacity: 0; transform: translate(-50%, -165px); }
-          to   { opacity: 1; transform: translate(-50%, -175px); }
-        }
-      `}</style>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", maxWidth: 460, width: "100%" }}>
+        <div style={{ marginBottom:16,zIndex:1,display:"flex",alignItems:"center",gap:8 }}>
+          <span style={{ fontSize:15,color:"#ffffff" }}>Keinginan:</span>
+          {editingDesire ? (
+            <input autoFocus value={desire} onChange={e=>setDesire(e.target.value)} onBlur={()=>setEditingDesire(false)} onKeyDown={e=>e.key==="Enter"&&setEditingDesire(false)} style={{ background:"#1e293b",border:`1px solid ${diff.color}`,borderRadius:8,padding:"3px 10px",color:diff.color,fontSize:15,outline:"none" }} />
+          ) : (
+            <button onClick={()=>setEditingDesire(true)} style={{ background:diff.color+"18",border:`1px solid ${diff.color}44`,borderRadius:8,padding:"3px 12px",color:diff.color,fontSize:15,cursor:"pointer" }}>{desire} ✏️</button>
+          )}
+        </div>
+
+        <div style={{ display:"flex",gap:8,zIndex:1,marginBottom:32 }}>
+          <button onClick={()=>setRunning(r=>!r)} disabled={isBumping || (isVolumeFull && protocolStep >= 2 && protocolStep <= 5)} style={{
+            padding:"11px 32px",borderRadius:12,
+            background:running?"#1e293b":`linear-gradient(135deg,${diff.accent},${diff.color}88)`,
+            border:`1px solid ${running?"#334155":diff.accent}`,
+            color:running?"#94a3b8":"#fff",fontSize:15,fontWeight:"bold",
+            cursor:"pointer",letterSpacing:1,
+          }}>
+            {running?"⏸ Pause":"◎ Mulai Focus"}
+          </button>
+        </div>
+
+        <div style={{ zIndex:1,width:"100%" }}>
+          <div style={{ display:"grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 14, width: "100%" }}>
+            {BUMPS.map((b,i) => {
+              const done = bumpDone[i];
+              const active = isBumping && (protocolStep === i + 2);
+              const isNext = protocolStep === (i + 2);
+              const canClick = isVolumeFull && isNext && !isBumping;
+              
+              return (
+                <button key={b.id} onClick={()=>handleBump(i)} style={{
+                  padding: "20px 16px",
+                  borderRadius:12,cursor: done || isBumping || !isNext ? "default" : "pointer",
+                  background:done?"#0f172a":active?b.color+"44":canClick?b.color+"33":"#0c1422",
+                  border:`1.5px solid ${done?"#1e293b":active?b.color:canClick?b.color:"#ffffff"}`,
+                  textAlign:"left",
+                  opacity: done ? 0.6 : isNext || active ? 1 : 0.4,
+                }}>
+                  <div style={{ fontSize: 22,marginBottom:2,color:b.color }}>{b.emoji}</div>
+                  <div style={{ fontSize: 15,color:b.color,fontWeight:"bold" }}>{b.label}</div>
+                  <div style={{ fontSize: 17,color:"#ffffff",marginTop:1 }}>{b.sub}</div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
