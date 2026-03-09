@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { supabase } from './lib/supabase';
 import { Auth } from './pages/Auth';
 import TheBump from './TheBump';
+import Explain from './Explain';
 
 function App() {
   const [session, setSession] = useState<any>(null);
@@ -34,13 +35,17 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route 
-          path="/auth" 
-          element={!session ? <Auth /> : <Navigate to="/" />} 
+        <Route
+          path="/auth"
+          element={!session ? <Auth /> : <Navigate to="/" />}
         />
-        <Route 
-          path="/" 
-          element={<TheBump session={session} />} 
+        <Route
+          path="/"
+          element={<TheBump session={session} />}
+        />
+        <Route
+          path="/explain"
+          element={<Explain />}
         />
       </Routes>
     </BrowserRouter>
