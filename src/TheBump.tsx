@@ -184,16 +184,55 @@ export default function TheBump({ session }: { session: any }) {
     }
   }, [running, isBumping, protocolStep, screen, playedGuidance, complete]);
 
-  // Auto Bump Logic: 3 seconds after a step is ready, auto-click bump
+  // Refresh/Close Warning
   useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (screen === "session" && !complete) {
+        const msg = "Apakah anda yakin untuk refresh dan mengulang sesi ?";
+        e.preventDefault();
+        e.returnValue = msg;
+        return msg;
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [screen, complete]);
+
+  // PWA Install Suggestion Toast (One-time)
+  useEffect(() => {
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
+    const hasSeenPwaToast = localStorage.getItem('pwa_toast_seen');
+    
+    if (!isStandalone && !hasSeenPwaToast) {
+      setTimeout(() => {
+        showToast("Silahkan install di Chrome/iOS (Tambahkan ke Layar Utama) agar bisa dipakai kapan saja.");
+        localStorage.setItem('pwa_toast_seen', 'true');
+      }, 5000);
+    }
+  }, []);
+
+  // Auto Bump Logic: 2 seconds after a step is ready, auto-click bump
+  useEffect(() => {
+    // Step 2-7: Bump Auto-Click
     if (screen === "session" && !isBumping && !complete && protocolStep >= 2 && protocolStep <= 7 && volume >= 100) {
-      console.log(`[AUTO-BUMP] Step ${protocolStep} ready. Starting 3s timer...`);
+      console.log(`[AUTO-BUMP] Step ${protocolStep} ready. Starting 2s timer...`);
       if (autoBumpTimerRef.current) clearTimeout(autoBumpTimerRef.current);
       autoBumpTimerRef.current = setTimeout(() => {
         console.log(`[AUTO-BUMP] Timer fired for Step ${protocolStep}. Triggering handleBump.`);
         handleBump(protocolStep - 2);
-      }, 3000);
-    } else {
+      }, 2000);
+    } 
+    // Step 8: Focus Auto-Click (Mulai Focus)
+    else if (screen === "session" && !running && !complete && protocolStep === 8 && volume === 0) {
+      console.log(`[AUTO-CLICK] Step 8 ready (Volume 0). Starting 2s timer...`);
+      if (autoBumpTimerRef.current) clearTimeout(autoBumpTimerRef.current);
+      autoBumpTimerRef.current = setTimeout(() => {
+        console.log(`[AUTO-CLICK] Timer fired for Step 8. Starting Focus.`);
+        setRunning(true);
+        setShowFingerHint(false);
+      }, 2000);
+    }
+    else {
       if (autoBumpTimerRef.current) {
         clearTimeout(autoBumpTimerRef.current);
         autoBumpTimerRef.current = null;
@@ -202,7 +241,7 @@ export default function TheBump({ session }: { session: any }) {
     return () => {
       if (autoBumpTimerRef.current) clearTimeout(autoBumpTimerRef.current);
     };
-  }, [screen, isBumping, complete, protocolStep, volume]);
+  }, [screen, isBumping, running, complete, protocolStep, volume]);
 
   // Background Audio Management
   useEffect(() => {

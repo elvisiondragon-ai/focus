@@ -14,7 +14,7 @@ if (typeof window !== 'undefined') {
   }
 }
 
-const APP_VERSION = '2026.03.10.02'; // Added Step Audio Guidance (1-8) and Auto-Bump logic
+const APP_VERSION = '2026.03.10.03'; // Step 8 Auto-Click, 2s Delay, Refresh Warning, PWA Toast
 
 // Execute aggressive cache clearing before React mounts if versions mismatch
 if (localStorage.getItem('v_cache') !== APP_VERSION) {
