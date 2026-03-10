@@ -139,11 +139,70 @@ export default function TheBump({ session }: { session: any }) {
   const [activeBubble, setActiveBubble] = useState<string | null>(null);
   const [shownFocus, setShownFocus] = useState<Set<number>>(new Set());
   const bubbleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const autoBumpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [isDesktop, setIsDesktop] = useState(window.innerWidth > 1024);
   const ringId = useRef(0);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const guidanceAudioRef = useRef<HTMLAudioElement | null>(null);
+  const [playedGuidance, setPlayedGuidance] = useState<Set<number>>(new Set());
+
+  // Guidance Audio Logic
+  useEffect(() => {
+    if (screen !== "session" || complete) return;
+
+    const playGuidance = async (step: number) => {
+      if (playedGuidance.has(step)) return;
+
+      console.log(`[GUIDANCE] Preparing audio for Step ${step}`);
+      if (guidanceAudioRef.current) {
+        guidanceAudioRef.current.pause();
+        guidanceAudioRef.current = null;
+      }
+      
+      const audioPath = `/assets/bump_step/step${step}.MP3`;
+      const audio = new Audio(audioPath);
+      audio.volume = 0.9;
+      guidanceAudioRef.current = audio;
+      
+      try {
+        await audio.play();
+        console.log(`[GUIDANCE] Playing: ${audioPath}`);
+        setPlayedGuidance(prev => new Set(prev).add(step));
+      } catch (err) {
+        console.warn(`[GUIDANCE] Playback failed for ${audioPath}:`, err);
+      }
+    };
+
+    if (protocolStep === 1 && running) {
+      playGuidance(1);
+    } else if (protocolStep >= 2 && protocolStep <= 7 && isBumping) {
+      playGuidance(protocolStep);
+    } else if (protocolStep === 8 && running) {
+      playGuidance(8);
+    }
+  }, [running, isBumping, protocolStep, screen, playedGuidance, complete]);
+
+  // Auto Bump Logic: 3 seconds after a step is ready, auto-click bump
+  useEffect(() => {
+    if (screen === "session" && !isBumping && !complete && protocolStep >= 2 && protocolStep <= 7 && volume >= 100) {
+      console.log(`[AUTO-BUMP] Step ${protocolStep} ready. Starting 3s timer...`);
+      if (autoBumpTimerRef.current) clearTimeout(autoBumpTimerRef.current);
+      autoBumpTimerRef.current = setTimeout(() => {
+        console.log(`[AUTO-BUMP] Timer fired for Step ${protocolStep}. Triggering handleBump.`);
+        handleBump(protocolStep - 2);
+      }, 3000);
+    } else {
+      if (autoBumpTimerRef.current) {
+        clearTimeout(autoBumpTimerRef.current);
+        autoBumpTimerRef.current = null;
+      }
+    }
+    return () => {
+      if (autoBumpTimerRef.current) clearTimeout(autoBumpTimerRef.current);
+    };
+  }, [screen, isBumping, complete, protocolStep, volume]);
 
   // Background Audio Management
   useEffect(() => {
@@ -332,7 +391,7 @@ export default function TheBump({ session }: { session: any }) {
             console.log("[BUBBLE] Triggering focus bubble at", floorPct, "%");
             setActiveBubble(match.text);
             if (bubbleTimerRef.current) clearTimeout(bubbleTimerRef.current);
-            bubbleTimerRef.current = setTimeout(() => setActiveBubble(null), 4000);
+            bubbleTimerRef.current = setTimeout(() => setActiveBubble(null), 10000);
             setShownFocus(prev => { const next2 = new Set(prev); next2.add(stepKey); return next2; });
           }
         }
@@ -380,7 +439,7 @@ export default function TheBump({ session }: { session: any }) {
             console.log("[BUBBLE] Triggering bump bubble at", progressPct, "%");
             setActiveBubble(match.text(desire));
             if (bubbleTimerRef.current) clearTimeout(bubbleTimerRef.current);
-            bubbleTimerRef.current = setTimeout(() => setActiveBubble(null), 4000);
+            bubbleTimerRef.current = setTimeout(() => setActiveBubble(null), 10000);
             setShownFocus(prev2 => { const next2 = new Set(prev2); next2.add(key); return next2; });
           }
         }
@@ -471,7 +530,7 @@ export default function TheBump({ session }: { session: any }) {
       console.log("[BUBBLE] Instant trigger for 0% bubble");
       setActiveBubble(firstBubble.text(desire));
       if (bubbleTimerRef.current) clearTimeout(bubbleTimerRef.current);
-      bubbleTimerRef.current = setTimeout(() => setActiveBubble(null), 4000);
+      bubbleTimerRef.current = setTimeout(() => setActiveBubble(null), 10000);
 
       // Mark as shown so timer doesn't repeat it
       const key = (i + 10) * 1000 + 0;
@@ -485,7 +544,11 @@ export default function TheBump({ session }: { session: any }) {
     setIsBumping(false); setBumpElapsed(0); setProtocolStep(1);
     setBumpDone([false, false, false, false]); setComplete(false); setRings([]);
     setActiveBubble(null); setShownFocus(new Set()); setSessionId(null);
-    setShowFingerHint(true);
+    setShowFingerHint(true); setPlayedGuidance(new Set());
+    if (guidanceAudioRef.current) {
+      guidanceAudioRef.current.pause();
+      guidanceAudioRef.current = null;
+    }
   };
 
   function HandleKembali() {
@@ -494,12 +557,17 @@ export default function TheBump({ session }: { session: any }) {
         const prevStep = protocolStep - 1;
         console.log("[LOG] Going back from step", protocolStep, "to", prevStep);
         setProtocolStep(prevStep); setIsBumping(false); setBumpElapsed(0); setRunning(false);
-        if (prevStep === 1) { setVolume(0); setElapsed(0); setBumpDone([false, false, false, false]); setActiveBubble(null); setShownFocus(new Set()); setShowFingerHint(true); }
+        if (prevStep === 1) { 
+          setVolume(0); setElapsed(0); setBumpDone([false, false, false, false]); 
+          setActiveBubble(null); setShownFocus(new Set()); setShowFingerHint(true);
+          setPlayedGuidance(new Set());
+        }
         else {
           setVolume(100); const newDone = [...bumpDone];
           for (let i = prevStep - 2; i < 4; i++) { if (i >= 0) newDone[i] = false; }
           setBumpDone(newDone);
           setShownFocus(prev => { const next = new Set(prev); const minKeyToRemove = prevStep * 1000; for (const key of next) { if (key >= minKeyToRemove) next.delete(key); } return next; });
+          setPlayedGuidance(prev => { const next = new Set(prev); for (let s = prevStep; s <= 8; s++) next.delete(s); return next; });
           setShowFingerHint(true);
         }
         showToast(`Kembali ke Tahap ${prevStep}`);

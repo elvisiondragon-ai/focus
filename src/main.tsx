@@ -14,7 +14,7 @@ if (typeof window !== 'undefined') {
   }
 }
 
-const APP_VERSION = '2026.03.09.01'; // 8-Step Protocol, eL Triangle Reality & Desire integration, Explain page, UI buttons
+const APP_VERSION = '2026.03.10.02'; // Added Step Audio Guidance (1-8) and Auto-Bump logic
 
 // Execute aggressive cache clearing before React mounts if versions mismatch
 if (localStorage.getItem('v_cache') !== APP_VERSION) {
